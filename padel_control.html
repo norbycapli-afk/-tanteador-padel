@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Control Pádel</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background: #0f0f1a; min-height: 100vh; padding: 12px; color: #fff; }
+
+  h1 { text-align: center; font-size: 13px; color: rgba(255,255,255,0.35); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px; }
+
+  .config-box { background: #1a1a2e; border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+  .cfg-label { font-size: 10px; color: rgba(255,255,255,0.4); font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+  input[type=text] { width: 100%; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; color: #fff; font-size: 14px; padding: 9px 12px; outline: none; margin-bottom: 10px; }
+  input[type=text]:focus { border-color: rgba(240,192,64,0.6); }
+
+  .team-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .team-box { background: #1a1a2e; border-radius: 12px; padding: 14px; }
+  .team-title { font-size: 13px; font-weight: 700; margin-bottom: 12px; color: #fff; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .btn { border: none; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; padding: 13px 10px; width: 100%; margin-bottom: 8px; transition: transform 0.1s, opacity 0.15s; letter-spacing: 0.3px; -webkit-tap-highlight-color: transparent; }
+  .btn:active { transform: scale(0.95); opacity: 0.8; }
+  .btn-green { background: #22c55e; color: #fff; }
+  .btn-red { background: #ef4444; color: #fff; }
+  .btn-yellow { background: #f0c040; color: #1a1a2e; }
+  .btn-blue { background: #3b82f6; color: #fff; }
+  .btn-purple { background: #a855f7; color: #fff; }
+  .btn-gray { background: rgba(255,255,255,0.12); color: #fff; }
+  .btn-orange { background: #f97316; color: #fff; }
+
+  .bottom-box { background: #1a1a2e; border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+  .bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  .scoreboard-mini {
+    background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px; padding: 10px 14px; margin-bottom: 12px;
+    display: grid; grid-template-columns: 1fr auto auto auto auto auto;
+    gap: 6px; align-items: center;
+  }
+  .sm-name { font-size: 12px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sm-cell { text-align: center; font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.5); min-width: 22px; }
+  .sm-cell.won { color: #fff; }
+  .sm-cell.cur { color: #fff; }
+  .sm-game { text-align: center; font-size: 18px; font-weight: 800; color: #fff; min-width: 28px; background: rgba(255,255,255,0.08); border-radius: 5px; padding: 2px 4px; }
+  .sm-pt { text-align: center; font-size: 15px; font-weight: 800; color: #f0c040; min-width: 36px; background: rgba(240,192,64,0.1); border-radius: 5px; padding: 2px 4px; }
+  .sm-pt.oro { font-size: 11px; color: #f0c040; }
+  .sm-pt.tb { color: #c084fc; background: rgba(192,132,252,0.12); }
+  .sm-dot { width: 7px; height: 7px; background: #f0c040; border-radius: 50%; display: inline-block; visibility: hidden; }
+  .sm-dot.vis { visibility: visible; }
+
+  .tb-indicator { text-align: center; color: #c084fc; font-size: 11px; font-weight: 700; letter-spacing: 2px; margin-bottom: 6px; display: none; }
+
+  .timer-display { text-align: center; font-size: 28px; font-weight: 800; color: #fff; margin-bottom: 10px; font-variant-numeric: tabular-nums; }
+  .status { text-align: center; font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.35); letter-spacing: 1.5px; margin-bottom: 10px; }
+  .status.running { color: #ff6b6b; }
+
+  .conn-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #ef4444; margin-right: 6px; }
+  .conn-dot.ok { background: #22c55e; }
+  .conn-status { text-align: center; font-size: 11px; color: rgba(255,255,255,0.3); margin-bottom: 8px; }
+</style>
+</head>
+<body>
+<h1>⚡ Control Pádel TV</h1>
+
+<div class="conn-status"><span class="conn-dot" id="conn-dot"></span><span id="conn-text">Conectando...</span></div>
+
+<!-- Mini marcador -->
+<div class="tb-indicator" id="tb-ind">⬡ TIE-BREAK ACTIVO</div>
+<div class="scoreboard-mini">
+  <div class="sm-name"><span class="sm-dot" id="d-dot-0"></span><span id="d-name-0">PAREJA 1</span></div>
+  <div class="sm-cell cur" id="d-s0-0">-</div><div class="sm-cell" id="d-s1-0">-</div><div class="sm-cell" id="d-s2-0">-</div>
+  <div class="sm-game" id="d-g-0">0</div>
+  <div class="sm-pt" id="d-p-0">0</div>
+</div>
+<div class="scoreboard-mini">
+  <div class="sm-name"><span class="sm-dot" id="d-dot-1"></span><span id="d-name-1">PAREJA 2</span></div>
+  <div class="sm-cell cur" id="d-s0-1">-</div><div class="sm-cell" id="d-s1-1">-</div><div class="sm-cell" id="d-s2-1">-</div>
+  <div class="sm-game" id="d-g-1">0</div>
+  <div class="sm-pt" id="d-p-1">0</div>
+</div>
+
+<!-- Config -->
+<div class="config-box">
+  <div class="cfg-label">Nombre Pareja 1</div>
+  <input type="text" id="inp-name-0" placeholder="PAREJA 1" oninput="updateName(0)">
+  <div class="cfg-label">Nombre Pareja 2</div>
+  <input type="text" id="inp-name-1" placeholder="PAREJA 2" oninput="updateName(1)">
+  <div class="cfg-label">Torneo</div>
+  <input type="text" id="inp-tournament" placeholder="TORNEO PADEL TV" oninput="updateTournament()" style="margin-bottom:0">
+</div>
+
+<!-- Controles por equipo -->
+<div class="team-grid">
+  <div class="team-box">
+    <div class="team-title" id="ctrl-name-0">PAREJA 1</div>
+    <button class="btn btn-green" onclick="addPoint(0)">+ PUNTO</button>
+    <button class="btn btn-red" onclick="subPoint(0)">− PUNTO</button>
+    <button class="btn btn-yellow" onclick="setServing(0)">⬡ SAQUE</button>
+  </div>
+  <div class="team-box">
+    <div class="team-title" id="ctrl-name-1">PAREJA 2</div>
+    <button class="btn btn-green" onclick="addPoint(1)">+ PUNTO</button>
+    <button class="btn btn-red" onclick="subPoint(1)">− PUNTO</button>
+    <button class="btn btn-yellow" onclick="setServing(1)">⬡ SAQUE</button>
+  </div>
+</div>
+
+<!-- Timer y otros -->
+<div class="bottom-box">
+  <div class="timer-display" id="timer-disp">00:00</div>
+  <div class="status" id="status-txt">DETENIDO</div>
+  <div class="bottom-grid">
+    <button class="btn btn-blue" id="btn-timer" onclick="toggleTimer()">▶ Iniciar</button>
+    <button class="btn btn-gray" onclick="resetTimer()">⏱ Reset</button>
+    <button class="btn btn-purple" id="btn-tb" onclick="toggleTiebreak()">Tie-break</button>
+    <button class="btn btn-gray" onclick="resetSet()">Nuevo set</button>
+  </div>
+  <button class="btn btn-orange" onclick="resetAll()" style="margin-top:8px">⚠ RESET TODO</button>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, onValue, set, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBLmCZqYxGnheevtj4aY5s3X73FumaW-zc",
+  authDomain: "tanteador-padel.firebaseapp.com",
+  databaseURL: "https://tanteador-padel-default-rtdb.firebaseio.com",
+  projectId: "tanteador-padel",
+  storageBucket: "tanteador-padel.firebasestorage.app",
+  messagingSenderId: "491608542765",
+  appId: "1:491608542765:web:fb42fb877a72ae712d32a4"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const stRef = ref(db, 'estado');
+
+const PTS = ['0','15','30','40'];
+let local = null;
+let timerInt = null;
+
+// Estado inicial
+const initState = {
+  names: ['PAREJA 1','PAREJA 2'],
+  tournament: 'TORNEO PADEL TV',
+  pts: [0,0], games: [0,0],
+  sets: [null,null,null],
+  curSet: 0, serving: 0,
+  tiebreak: false, tbPts: [0,0],
+  timerRunning: false, timerBase: 0, timerStarted: null
+};
+
+function push(st){ set(stRef, st); }
+
+function getState(){ return local ? JSON.parse(JSON.stringify(local)) : JSON.parse(JSON.stringify(initState)); }
+
+// Escuchar Firebase
+onValue(stRef, snap => {
+  const data = snap.val();
+  if(!data){ local = JSON.parse(JSON.stringify(initState)); push(local); }
+  else { local = data; }
+  renderUI(local);
+  // conn
+  document.getElementById('conn-dot').className = 'conn-dot ok';
+  document.getElementById('conn-text').textContent = 'Conectado';
+}, err => {
+  document.getElementById('conn-text').textContent = 'Sin conexión';
+});
+
+function renderUI(st){
+  // inputs
+  const i0 = document.getElementById('inp-name-0');
+  const i1 = document.getElementById('inp-name-1');
+  const it = document.getElementById('inp-tournament');
+  if(document.activeElement!==i0) i0.value = (st.names&&st.names[0])||'';
+  if(document.activeElement!==i1) i1.value = (st.names&&st.names[1])||'';
+  if(document.activeElement!==it) it.value = st.tournament||'';
+  document.getElementById('ctrl-name-0').textContent = (st.names&&st.names[0])||'PAREJA 1';
+  document.getElementById('ctrl-name-1').textContent = (st.names&&st.names[1])||'PAREJA 2';
+
+  // saque
+  const srv = st.serving||0;
+  document.getElementById('d-dot-0').className = 'sm-dot'+(srv===0?' vis':'');
+  document.getElementById('d-dot-1').className = 'sm-dot'+(srv===1?' vis':'');
+
+  // TB
+  document.getElementById('tb-ind').style.display = st.tiebreak ? 'block' : 'none';
+  document.getElementById('btn-tb').textContent = st.tiebreak ? 'Salir TB' : 'Tie-break';
+  document.getElementById('btn-tb').className = st.tiebreak ? 'btn btn-gray' : 'btn btn-purple';
+
+  // Sets
+  const sets = st.sets||[null,null,null];
+  const curSet = st.curSet||0;
+  const games = st.games||[0,0];
+  const tbPts = st.tbPts||[0,0];
+  const pts = st.pts||[0,0];
+  for(let t=0;t<2;t++){
+    for(let s=0;s<3;s++){
+      const el = document.getElementById('d-s'+s+'-'+t);
+      if(sets[s]){ el.textContent=sets[s][t]; el.className='sm-cell'+(sets[s][t]>sets[s][1-t]?' won':''); }
+      else if(s===curSet){ el.textContent=games[t]; el.className='sm-cell cur'; }
+      else { el.textContent='-'; el.className='sm-cell'; }
+    }
+    document.getElementById('d-g-'+t).textContent = st.tiebreak ? tbPts[t] : games[t];
+    const pEl = document.getElementById('d-p-'+t);
+    if(st.tiebreak){ pEl.textContent=tbPts[t]; pEl.className='sm-pt tb'; }
+    else {
+      const pi=pts[t], oi=pts[1-t];
+      if(pi===3&&oi===3){ pEl.textContent='ORO'; pEl.className='sm-pt oro'; }
+      else { pEl.textContent=PTS[pi]||'0'; pEl.className='sm-pt'; }
+    }
+  }
+  // Timer display
+  clearInterval(timerInt);
+  if(st.timerRunning){
+    const base = st.timerBase||0;
+    const started = st.timerStarted||Date.now();
+    const upd = ()=>{
+      const el = base+Math.floor((Date.now()-started)/1000);
+      const m=Math.floor(el/60).toString().padStart(2,'0');
+      const s=(el%60).toString().padStart(2,'0');
+      document.getElementById('timer-disp').textContent=m+':'+s;
+    };
+    upd(); timerInt=setInterval(upd,500);
+    document.getElementById('status-txt').textContent='EN JUEGO'; document.getElementById('status-txt').className='status running';
+    document.getElementById('btn-timer').textContent='⏸ Pausar';
+  } else {
+    const secs=st.timerBase||0;
+    const m=Math.floor(secs/60).toString().padStart(2,'0');
+    const s=(secs%60).toString().padStart(2,'0');
+    document.getElementById('timer-disp').textContent=m+':'+s;
+    document.getElementById('status-txt').textContent='DETENIDO'; document.getElementById('status-txt').className='status';
+    document.getElementById('btn-timer').textContent='▶ Iniciar';
+  }
+}
+
+// Acciones
+window.updateName = t => {
+  const st = getState();
+  st.names[t] = (document.getElementById('inp-name-'+t).value||'PAREJA '+(t+1)).toUpperCase();
+  push(st);
+};
+window.updateTournament = () => {
+  const st = getState();
+  st.tournament = (document.getElementById('inp-tournament').value||'TORNEO PADEL TV').toUpperCase();
+  push(st);
+};
+window.setServing = t => { const st=getState(); st.serving=t; push(st); };
+
+window.addPoint = t => {
+  const st=getState();
+  if(st.tiebreak){ addTBPt(st,t); push(st); return; }
+  const o=1-t, pi=st.pts[t], oi=st.pts[o];
+  if(pi===3&&oi===3){ winGame(st,t); }
+  else if(pi===3&&oi<3){ winGame(st,t); }
+  else { st.pts[t]++; }
+  push(st);
+};
+window.subPoint = t => {
+  const st=getState();
+  if(st.tiebreak){ if(st.tbPts[t]>0) st.tbPts[t]--; push(st); return; }
+  if(st.pts[t]>0) st.pts[t]--;
+  push(st);
+};
+
+function addTBPt(st,t){
+  st.tbPts[t]++;
+  const [a,b]=st.tbPts;
+  if((a>=7||b>=7)&&Math.abs(a-b)>=2){
+    st.games[t]++;
+    st.tiebreak=false; st.tbPts=[0,0]; st.pts=[0,0];
+    st.sets[st.curSet]=[...st.games]; st.games=[0,0];
+    if(st.curSet<2) st.curSet++;
+  }
+}
+function winGame(st,t){
+  st.pts=[0,0]; st.games[t]++;
+  const [a,b]=st.games;
+  if((a>=6&&a-b>=2)||(a===7&&b===6)||(b>=6&&b-a>=2)||(b===7&&a===6)){
+    st.sets[st.curSet]=[...st.games]; st.games=[0,0];
+    st.tiebreak=false;
+    if(st.curSet<2) st.curSet++;
+  }
+  if(st.games[0]===6&&st.games[1]===6){ st.tiebreak=true; st.tbPts=[0,0]; }
+}
+
+window.toggleTiebreak = () => {
+  const st=getState();
+  st.tiebreak=!st.tiebreak;
+  if(st.tiebreak){ st.tbPts=[0,0]; st.pts=[0,0]; }
+  else { st.pts=[0,0]; }
+  push(st);
+};
+window.resetSet = () => {
+  const st=getState();
+  st.sets[st.curSet]=[...st.games]; st.games=[0,0]; st.pts=[0,0]; st.tiebreak=false; st.tbPts=[0,0];
+  if(st.curSet<2) st.curSet++;
+  push(st);
+};
+window.resetAll = () => {
+  if(!confirm('¿Resetear todo el partido?')) return;
+  const st=JSON.parse(JSON.stringify(initState));
+  push(st);
+};
+window.toggleTimer = () => {
+  const st=getState();
+  if(st.timerRunning){
+    const elapsed=Math.floor((Date.now()-(st.timerStarted||Date.now()))/1000);
+    st.timerBase=(st.timerBase||0)+elapsed;
+    st.timerRunning=false; st.timerStarted=null;
+  } else {
+    st.timerRunning=true; st.timerStarted=Date.now();
+  }
+  push(st);
+};
+window.resetTimer = () => {
+  const st=getState();
+  st.timerRunning=false; st.timerBase=0; st.timerStarted=null;
+  push(st);
+};
+</script>
+</body>
+</html>

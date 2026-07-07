@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tanteador Pádel</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Arial', sans-serif; background: #1a1a2e; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; padding: 20px; }
+
+  .overlay {
+    background: rgba(0,0,0,0.82);
+    border: 2px solid rgba(255,255,255,0.15);
+    border-radius: 12px;
+    padding: 14px 20px;
+    width: 720px;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+  .tournament-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 10px; padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.12);
+  }
+  .tournament-name { color: #f0c040; font-size: 13px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; }
+  .match-time { color: #fff; font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; background: rgba(255,255,255,0.08); padding: 3px 10px; border-radius: 6px; }
+  .time-live { display: inline-block; width: 8px; height: 8px; background: #ff3b3b; border-radius: 50%; margin-right: 6px; animation: blink 1.2s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+  .sets-header {
+    display: grid;
+    grid-template-columns: 1fr 36px 36px 36px 64px 72px;
+    gap: 4px; padding: 0 10px 4px; align-items: center;
+  }
+  .sets-header span {
+    color: rgba(255,255,255,0.3); font-size: 10px; font-weight: 700;
+    letter-spacing: 1.5px; text-transform: uppercase; text-align: center;
+  }
+
+  .scoreboard { display: flex; flex-direction: column; gap: 4px; }
+  .team-row {
+    display: grid;
+    grid-template-columns: 1fr 36px 36px 36px 64px 72px;
+    align-items: center; gap: 4px;
+    padding: 8px 10px; border-radius: 8px; transition: background 0.2s;
+  }
+  .team-row.serving { background: rgba(255,255,255,0.06); }
+
+  .team-name { color: #fff; font-size: 17px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .serving-dot { width: 8px; height: 8px; background: #f0c040; border-radius: 50%; display: inline-block; margin-right: 8px; visibility: hidden; }
+  .team-row.serving .serving-dot { visibility: visible; }
+
+  .set-cell { text-align: center; color: rgba(255,255,255,0.4); font-size: 16px; font-weight: 600; }
+  .set-cell.won { color: #fff; }
+  .set-cell.cur { color: rgba(255,255,255,0.6); font-size: 18px; }
+
+  .game-cell { text-align: center; color: #fff; font-size: 30px; font-weight: 800; font-variant-numeric: tabular-nums; background: rgba(255,255,255,0.1); border-radius: 6px; padding: 4px 0; }
+  .point-cell { text-align: center; color: #f0c040; font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; background: rgba(240,192,64,0.12); border: 1px solid rgba(240,192,64,0.25); border-radius: 6px; padding: 4px 0; min-width: 64px; }
+  .point-cell.deuce { color: #ff9f40; background: rgba(255,159,64,0.12); border-color: rgba(255,159,64,0.3); }
+  .point-cell.adv { color: #22c55e; background: rgba(34,197,94,0.12); border-color: rgba(34,197,94,0.3); }
+  .point-cell.tb { color: #c084fc; background: rgba(192,132,252,0.12); border-color: rgba(192,132,252,0.3); }
+
+  /* MODO TIE-BREAK banner */
+  .tb-badge {
+    text-align: center; color: #c084fc; font-size: 11px; font-weight: 700;
+    letter-spacing: 2px; padding: 4px 0 2px; display: none;
+  }
+
+  /* CONTROL PANEL */
+  .control-panel { background: #16213e; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; width: 720px; }
+  .control-title { color: rgba(255,255,255,0.5); font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px; }
+
+  .config-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .config-full { grid-template-columns: 1fr; }
+  .config-input { display: flex; flex-direction: column; gap: 4px; }
+  .config-input label { color: rgba(255,255,255,0.45); font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+  .config-input input { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; color: #fff; font-size: 13px; padding: 8px 12px; outline: none; transition: border 0.2s; }
+  .config-input input:focus { border-color: rgba(240,192,64,0.6); }
+
+  .team-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+  .team-ctrl { background: rgba(255,255,255,0.04); border-radius: 12px; padding: 14px; }
+  .team-ctrl-name { color: #fff; font-size: 13px; font-weight: 700; margin-bottom: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .btn-section { margin-bottom: 6px; }
+  .btn-label { color: rgba(255,255,255,0.3); font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px; }
+  .btn-row { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  .btn { border: none; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; padding: 7px 12px; transition: transform 0.1s, opacity 0.15s; letter-spacing: 0.3px; }
+  .btn:active { transform: scale(0.95); }
+  .btn-green { background: #22c55e; color: #fff; }
+  .btn-red { background: #ef4444; color: #fff; }
+  .btn-yellow { background: #f0c040; color: #1a1a2e; }
+  .btn-blue { background: #3b82f6; color: #fff; }
+  .btn-purple { background: #a855f7; color: #fff; }
+  .btn-gray { background: rgba(255,255,255,0.12); color: #fff; }
+  .btn:hover { opacity: 0.88; }
+
+  .bottom-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .btn-lg { padding: 10px 20px; font-size: 13px; border-radius: 10px; }
+  .divider { width: 1px; height: 32px; background: rgba(255,255,255,0.1); }
+  .status-badge { font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 20px; letter-spacing: 0.5px; }
+  .status-running { background: rgba(255,59,59,0.2); color: #ff6b6b; }
+  .status-stopped { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.5); }
+  .mode-badge { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; background: rgba(168,85,247,0.2); color: #c084fc; display: none; }
+</style>
+</head>
+<body>
+
+<!-- OVERLAY -->
+<div class="overlay" id="overlay">
+  <div class="tournament-bar">
+    <span class="tournament-name" id="disp-tournament">TORNEO PADEL TV</span>
+    <span class="match-time"><span class="time-live" id="live-dot"></span><span id="disp-time">00:00</span></span>
+  </div>
+  <div class="tb-badge" id="tb-badge">⬡ TIE-BREAK</div>
+  <div class="sets-header">
+    <span></span>
+    <span>S1</span><span>S2</span><span>S3</span>
+    <span>GAME</span>
+    <span>PUNTO</span>
+  </div>
+  <div class="scoreboard">
+    <div class="team-row serving" id="row-0">
+      <div class="team-name"><span class="serving-dot"></span><span id="disp-name-0">PAREJA 1</span></div>
+      <div class="set-cell cur" id="s0-0">-</div>
+      <div class="set-cell" id="s1-0">-</div>
+      <div class="set-cell" id="s2-0">-</div>
+      <div class="game-cell" id="g-0">0</div>
+      <div class="point-cell" id="p-0">0</div>
+    </div>
+    <div class="team-row" id="row-1">
+      <div class="team-name"><span class="serving-dot"></span><span id="disp-name-1">PAREJA 2</span></div>
+      <div class="set-cell cur" id="s0-1">-</div>
+      <div class="set-cell" id="s1-1">-</div>
+      <div class="set-cell" id="s2-1">-</div>
+      <div class="game-cell" id="g-1">0</div>
+      <div class="point-cell" id="p-1">0</div>
+    </div>
+  </div>
+</div>
+
+<!-- PANEL DE CONTROL -->
+<div class="control-panel">
+  <div class="control-title">Panel de control</div>
+
+  <div class="config-row">
+    <div class="config-input">
+      <label>Nombre Pareja 1</label>
+      <input type="text" id="inp-name-0" placeholder="PAREJA 1" oninput="updateName(0)" value="PAREJA 1">
+    </div>
+    <div class="config-input">
+      <label>Nombre Pareja 2</label>
+      <input type="text" id="inp-name-1" placeholder="PAREJA 2" oninput="updateName(1)" value="PAREJA 2">
+    </div>
+  </div>
+  <div class="config-row config-full" style="margin-bottom:16px;">
+    <div class="config-input">
+      <label>Nombre del Torneo</label>
+      <input type="text" id="inp-tournament" placeholder="TORNEO PADEL TV" oninput="updateTournament()" value="TORNEO PADEL TV">
+    </div>
+  </div>
+
+  <div class="team-controls">
+    <div class="team-ctrl">
+      <div class="team-ctrl-name" id="ctrl-name-0">PAREJA 1</div>
+      <div class="btn-section">
+        <div class="btn-label">Punto</div>
+        <div class="btn-row">
+          <button class="btn btn-green" onclick="addPoint(0)">+ Punto</button>
+          <button class="btn btn-red" onclick="subPoint(0)">− Punto</button>
+          <button class="btn btn-yellow" onclick="setServing(0)">Saque</button>
+        </div>
+      </div>
+    </div>
+    <div class="team-ctrl">
+      <div class="team-ctrl-name" id="ctrl-name-1">PAREJA 2</div>
+      <div class="btn-section">
+        <div class="btn-label">Punto</div>
+        <div class="btn-row">
+          <button class="btn btn-green" onclick="addPoint(1)">+ Punto</button>
+          <button class="btn btn-red" onclick="subPoint(1)">− Punto</button>
+          <button class="btn btn-yellow" onclick="setServing(1)">Saque</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-controls">
+    <button class="btn btn-blue btn-lg" id="btn-timer" onclick="toggleTimer()">▶ Iniciar</button>
+    <button class="btn btn-gray btn-lg" onclick="resetTimer()">⏱ Reset tiempo</button>
+    <div class="divider"></div>
+    <button class="btn btn-purple btn-lg" id="btn-tb" onclick="toggleTiebreak()">Tie-break</button>
+    <button class="btn btn-gray btn-lg" onclick="resetAll()">Reset todo</button>
+    <span class="status-badge status-stopped" id="status-badge">DETENIDO</span>
+    <span class="mode-badge" id="mode-badge">TIE-BREAK</span>
+  </div>
+</div>
+
+<script>
+// Secuencia normal de puntos
+const PTS = ['0','15','30','40','AD','WIN'];
+// Estado
+let st = {
+  names: ['PAREJA 1','PAREJA 2'],
+  tournament: 'TORNEO PADEL TV',
+  pts: [0, 0],       // índice en PTS
+  games: [0, 0],
+  sets: [null, null, null], // cada set: [g0, g1]
+  curSet: 0,
+  serving: 0,
+  tiebreak: false,
+  tbPts: [0, 0],
+  timerRunning: false,
+  timerSecs: 0,
+  timerInt: null
+};
+
+function updateName(t) {
+  const v = (document.getElementById('inp-name-'+t).value || 'PAREJA '+(t+1)).toUpperCase();
+  st.names[t] = v;
+  document.getElementById('disp-name-'+t).textContent = v;
+  document.getElementById('ctrl-name-'+t).textContent = v;
+}
+function updateTournament() {
+  const v = (document.getElementById('inp-tournament').value || 'TORNEO PADEL TV').toUpperCase();
+  st.tournament = v;
+  document.getElementById('disp-tournament').textContent = v;
+}
+function setServing(t) {
+  st.serving = t;
+  document.getElementById('row-0').className = 'team-row'+(t===0?' serving':'');
+  document.getElementById('row-1').className = 'team-row'+(t===1?' serving':'');
+}
+
+// --- PUNTOS ---
+function addPoint(t) {
+  if(st.tiebreak) { addTBPoint(t); return; }
+  const o = 1-t;
+  const pi = st.pts[t];
+  // Deuce logic
+  if(pi === 3 && st.pts[o] === 3) { // 40-40 → PUNTO DE ORO, gana el game directo
+    winGame(t); return;
+  }
+  if(pi === 3 && st.pts[o] < 3) { // WIN normal
+    winGame(t); return;
+  }
+  st.pts[t]++;
+  render();
+}
+function subPoint(t) {
+  if(st.tiebreak) {
+    if(st.tbPts[t] > 0) st.tbPts[t]--;
+    render(); return;
+  }
+  if(st.pts[t] > 0) st.pts[t]--;
+  // si uno tenía AD y bajamos, volvemos a deuce
+  render();
+}
+function winGame(t) {
+  st.pts = [0,0];
+  st.games[t]++;
+  checkSetWin(t);
+  render();
+}
+function checkSetWin(t) {
+  const [a,b] = st.games;
+  const winT = (a>=6 && a-b>=2) || (a===7 && b===6);
+  const winO = (b>=6 && b-a>=2) || (b===7 && a===6);
+  if(winT || winO) {
+    st.sets[st.curSet] = [...st.games];
+    st.games = [0,0];
+    st.tiebreak = false;
+    if(st.curSet < 2) st.curSet++;
+  }
+  // Auto-activar tie-break si 6-6
+  if(st.games[0]===6 && st.games[1]===6) {
+    st.tiebreak = true;
+    st.tbPts = [0,0];
+  }
+}
+
+// --- TIE-BREAK ---
+function addTBPoint(t) {
+  st.tbPts[t]++;
+  const [a,b] = st.tbPts;
+  const lead = Math.abs(a-b);
+  if((a>=7||b>=7) && lead>=2) {
+    // gana el tie-break → gana el game → set
+    st.games[t]++;
+    st.tiebreak = false;
+    st.tbPts = [0,0];
+    st.pts = [0,0];
+    st.sets[st.curSet] = [...st.games];
+    st.games = [0,0];
+    if(st.curSet < 2) st.curSet++;
+  }
+  render();
+}
+function toggleTiebreak() {
+  st.tiebreak = !st.tiebreak;
+  if(st.tiebreak) { st.tbPts = [0,0]; st.pts = [0,0]; }
+  else { st.pts = [0,0]; }
+  render();
+}
+
+// --- RESET ---
+function resetAll() {
+  st.pts = [0,0]; st.games = [0,0]; st.sets = [null,null,null];
+  st.curSet = 0; st.serving = 0; st.tiebreak = false; st.tbPts = [0,0];
+  resetTimer(); render();
+  setServing(0);
+}
+
+// --- RENDER ---
+function render() {
+  const isTB = st.tiebreak;
+  document.getElementById('tb-badge').style.display = isTB ? 'block' : 'none';
+  document.getElementById('mode-badge').style.display = isTB ? 'inline-block' : 'none';
+  document.getElementById('btn-tb').textContent = isTB ? 'Salir TB' : 'Tie-break';
+  document.getElementById('btn-tb').className = isTB ? 'btn btn-gray btn-lg' : 'btn btn-purple btn-lg';
+
+  for(let t=0;t<2;t++){
+    // Sets
+    for(let s=0;s<3;s++){
+      const el = document.getElementById('s'+s+'-'+t);
+      const hEl = document.getElementById('s'+s+'-'+(1-t));
+      if(st.sets[s]){
+        el.textContent = st.sets[s][t];
+        el.className = 'set-cell'+(st.sets[s][t]>st.sets[s][1-t]?' won':'');
+      } else if(s===st.curSet){
+        el.textContent = st.games[t];
+        el.className = 'set-cell cur';
+      } else {
+        el.textContent = '-';
+        el.className = 'set-cell';
+      }
+    }
+    // Games
+    document.getElementById('g-'+t).textContent = isTB ? st.tbPts[t] : st.games[t];
+
+    // Puntos
+    const pEl = document.getElementById('p-'+t);
+    if(isTB){
+      pEl.textContent = st.tbPts[t];
+      pEl.className = 'point-cell tb';
+    } else {
+      const pi = st.pts[t];
+      const oi = st.pts[1-t];
+      let label = PTS[pi] || '0';
+      let cls = 'point-cell';
+      if(pi===3 && oi===3) { label='ORO'; cls='point-cell adv'; }
+      pEl.textContent = label;
+      pEl.className = cls;
+    }
+  }
+}
+
+// --- TIMER ---
+function toggleTimer() {
+  if(st.timerRunning){
+    clearInterval(st.timerInt); st.timerRunning=false;
+    document.getElementById('btn-timer').textContent='▶ Continuar';
+    document.getElementById('status-badge').className='status-badge status-stopped';
+    document.getElementById('status-badge').textContent='DETENIDO';
+    document.getElementById('live-dot').style.display='none';
+  } else {
+    st.timerInt=setInterval(tick,1000); st.timerRunning=true;
+    document.getElementById('btn-timer').textContent='⏸ Pausar';
+    document.getElementById('status-badge').className='status-badge status-running';
+    document.getElementById('status-badge').textContent='EN JUEGO';
+    document.getElementById('live-dot').style.display='inline-block';
+  }
+}
+function tick(){
+  st.timerSecs++;
+  const m=Math.floor(st.timerSecs/60).toString().padStart(2,'0');
+  const s=(st.timerSecs%60).toString().padStart(2,'0');
+  document.getElementById('disp-time').textContent=m+':'+s;
+}
+function resetTimer(){
+  clearInterval(st.timerInt); st.timerRunning=false; st.timerSecs=0;
+  document.getElementById('disp-time').textContent='00:00';
+  document.getElementById('btn-timer').textContent='▶ Iniciar';
+  document.getElementById('status-badge').className='status-badge status-stopped';
+  document.getElementById('status-badge').textContent='DETENIDO';
+  document.getElementById('live-dot').style.display='none';
+}
+
+document.getElementById('live-dot').style.display='none';
+render();
+</script>
+</body>
+</html>
