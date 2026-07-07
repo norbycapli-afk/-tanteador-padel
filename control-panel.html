@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Padel Control — Panel Operador</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #00D4AA;
+    --green-dim: rgba(0,212,170,0.15);
+    --green-border: rgba(0,212,170,0.4);
+    --yellow: #FFE500;
+    --red: #FF4444;
+    --bg: #0A0A12;
+    --surface: #12121E;
+    --surface2: #1A1A2A;
+    --border: rgba(255,255,255,0.08);
+    --text: #FFFFFF;
+    --text-dim: rgba(255,255,255,0.45);
+    --text-mid: rgba(255,255,255,0.7);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Barlow', sans-serif;
+    min-height: 100vh;
+    padding-bottom: 40px;
+  }
+
+  .top-bar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 22px;
+    letter-spacing: 2px;
+    color: var(--green);
+    text-transform: uppercase;
+  }
+
+  .logo span { color: var(--text-dim); font-weight: 400; }
+
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 6px var(--green);
+    animation: pulse 2s infinite;
+    display: inline-block;
+    margin-right: 6px;
+  }
+
+  @keyframes pulse {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .status-text {
+    font-size: 12px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+
+  .container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px;
+  }
+
+  .card-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+
+  /* Score board preview */
+  .preview-board {
+    background: rgba(0,0,0,0.5);
+    border-radius: 8px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    border: 1px solid var(--green-border);
+    flex-wrap: wrap;
+  }
+
+  .preview-team {
+    flex: 1;
+    min-width: 120px;
+  }
+
+  .preview-team-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--text);
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .preview-sets {
+    display: flex;
+    gap: 6px;
+    margin-top: 2px;
+  }
+
+  .preview-set {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 14px;
+    color: var(--text-dim);
+    font-weight: 600;
+  }
+
+  .preview-set.won { color: var(--green); }
+
+  .preview-center {
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .preview-games {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 48px;
+    font-weight: 900;
+    color: var(--text);
+    line-height: 1;
+    letter-spacing: 4px;
+  }
+
+  .preview-sub {
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+  }
+
+  .preview-team-right { text-align: right; }
+
+  /* Team name inputs */
+  .team-inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .input-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+  }
+
+  input[type="text"] {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    padding: 10px 12px;
+    width: 100%;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  input[type="text"]:focus {
+    border-color: var(--green);
+  }
+
+  /* Score controls */
+  .score-grid {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 12px;
+    align-items: start;
+  }
+
+  .score-col {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .score-col-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .score-display {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 64px;
+    font-weight: 900;
+    color: var(--text);
+    text-align: center;
+    line-height: 1;
+  }
+
+  .score-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-top: 50px;
+    color: var(--text-dim);
+    font-size: 28px;
+    font-weight: 300;
+  }
+
+  .btn-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .btn {
+    border: none;
+    border-radius: 8px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    padding: 12px 8px;
+    transition: transform 0.1s, opacity 0.1s, background 0.15s;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .btn:active { transform: scale(0.96); }
+
+  .btn-add {
+    background: var(--green);
+    color: #000;
+    font-size: 24px;
+    padding: 14px;
+  }
+
+  .btn-sub {
+    background: var(--surface2);
+    color: var(--text-mid);
+    border: 1px solid var(--border);
+  }
+
+  .btn-sub:hover { border-color: rgba(255,255,255,0.2); }
+
+  .btn-danger {
+    background: rgba(255,68,68,0.15);
+    color: var(--red);
+    border: 1px solid rgba(255,68,68,0.3);
+  }
+
+  .btn-warn {
+    background: rgba(255,229,0,0.12);
+    color: var(--yellow);
+    border: 1px solid rgba(255,229,0,0.3);
+  }
+
+  .btn-primary {
+    background: var(--green-dim);
+    color: var(--green);
+    border: 1px solid var(--green-border);
+  }
+
+  .btn-neutral {
+    background: var(--surface2);
+    color: var(--text-mid);
+    border: 1px solid var(--border);
+  }
+
+  .btn-full { grid-column: 1 / -1; }
+
+  /* Serve selector */
+  .serve-selector {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .serve-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-mid);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .serve-btn.active {
+    background: rgba(255,229,0,0.12);
+    border-color: rgba(255,229,0,0.5);
+    color: var(--yellow);
+  }
+
+  .serve-dot-ui {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 6px currentColor;
+    flex-shrink: 0;
+  }
+
+  /* Sets display */
+  .sets-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .sets-table th {
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    font-weight: 600;
+    padding: 0 0 8px 0;
+    text-align: center;
+  }
+
+  .sets-table th:first-child { text-align: left; }
+
+  .sets-table td {
+    padding: 8px 4px;
+    text-align: center;
+    border-top: 1px solid var(--border);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  .sets-table td:first-child {
+    text-align: left;
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--text-mid);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding-left: 0;
+  }
+
+  .sets-table td.won { color: var(--green); }
+  .sets-table td.current { color: var(--text); }
+  .sets-table td.lost { color: var(--text-dim); }
+
+  /* Controls row */
+  .controls-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  /* Toggle visibility */
+  .visibility-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .btn-show {
+    background: var(--green-dim);
+    color: var(--green);
+    border: 1px solid var(--green-border);
+  }
+
+  .btn-hide {
+    background: rgba(255,255,255,0.05);
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--surface);
+    border: 1px solid var(--green-border);
+    color: var(--green);
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 20px;
+    border-radius: 40px;
+    transition: transform 0.3s ease;
+    z-index: 999;
+    white-space: nowrap;
+    letter-spacing: 1px;
+  }
+
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .section-sep {
+    height: 1px;
+    background: var(--border);
+    margin: 10px 0;
+  }
+
+  .tiebreak-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+  }
+
+  .tiebreak-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-mid);
+  }
+
+  .toggle-switch {
+    width: 44px;
+    height: 24px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+    position: relative;
+    transition: background 0.2s, border-color 0.2s;
+  }
+
+  .toggle-switch::after {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--text-dim);
+    top: 2px;
+    left: 2px;
+    transition: transform 0.2s, background 0.2s;
+  }
+
+  .toggle-switch.on {
+    background: rgba(255,229,0,0.2);
+    border-color: rgba(255,229,0,0.5);
+  }
+
+  .toggle-switch.on::after {
+    transform: translateX(20px);
+    background: var(--yellow);
+  }
+
+  @media (max-width: 400px) {
+    .preview-games { font-size: 40px; }
+    .score-display { font-size: 52px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="logo">PADEL <span>CONTROL</span></div>
+  <div>
+    <span class="status-dot"></span>
+    <span class="status-text">EN VIVO</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- PREVIEW -->
+  <div class="card">
+    <div class="card-title">Vista Previa Overlay</div>
+    <div class="preview-board">
+      <div class="preview-team">
+        <div class="preview-team-name" id="prev-t1">EQUIPO 1</div>
+        <div class="preview-sets" id="prev-sets1"></div>
+      </div>
+      <div class="preview-center">
+        <div class="preview-games" id="prev-games">0 — 0</div>
+        <div class="preview-sub" id="prev-sub">GAMES</div>
+      </div>
+      <div class="preview-team preview-team-right">
+        <div class="preview-team-name" id="prev-t2">EQUIPO 2</div>
+        <div class="preview-sets" id="prev-sets2"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NOMBRES -->
+  <div class="card">
+    <div class="card-title">Nombres de Equipos</div>
+    <div class="team-inputs">
+      <div class="input-group">
+        <div class="input-label">Equipo 1</div>
+        <input type="text" id="inp-t1" value="EQUIPO 1" maxlength="16" placeholder="Nombre...">
+      </div>
+      <div class="input-group">
+        <div class="input-label">Equipo 2</div>
+        <input type="text" id="inp-t2" value="EQUIPO 2" maxlength="16" placeholder="Nombre...">
+      </div>
+    </div>
+  </div>
+
+  <!-- GAMES -->
+  <div class="card">
+    <div class="card-title">Games — Set Actual</div>
+    <div class="score-grid">
+      <div class="score-col">
+        <div class="score-col-label" id="lbl-t1">Equipo 1</div>
+        <div class="score-display" id="disp-g1">0</div>
+        <div class="btn-row">
+          <button class="btn btn-add" onclick="addGame(1)">+</button>
+          <button class="btn btn-sub" onclick="subGame(1)">−</button>
+        </div>
+      </div>
+      <div class="score-divider">—</div>
+      <div class="score-col">
+        <div class="score-col-label" id="lbl-t2">Equipo 2</div>
+        <div class="score-display" id="disp-g2">0</div>
+        <div class="btn-row">
+          <button class="btn btn-add" onclick="addGame(2)">+</button>
+          <button class="btn btn-sub" onclick="subGame(2)">−</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-sep"></div>
+
+    <div class="tiebreak-toggle">
+      <span class="tiebreak-label">⚡ Tiebreak</span>
+      <div class="toggle-switch" id="tb-toggle" onclick="toggleTiebreak()"></div>
+    </div>
+
+    <div class="btn-row" style="margin-top:8px;">
+      <button class="btn btn-primary" onclick="finishSet()">✓ CERRAR SET</button>
+      <button class="btn btn-danger" onclick="resetGames()">↺ RESET GAMES</button>
+    </div>
+  </div>
+
+  <!-- SETS -->
+  <div class="card">
+    <div class="card-title">Historial de Sets</div>
+    <table class="sets-table">
+      <thead>
+        <tr>
+          <th>Equipo</th>
+          <th>S1</th><th>S2</th><th>S3</th>
+        </tr>
+      </thead>
+      <tbody id="sets-tbody">
+        <tr>
+          <td id="sets-t1-name">EQUIPO 1</td>
+          <td>-</td><td>-</td><td>-</td>
+        </tr>
+        <tr>
+          <td id="sets-t2-name">EQUIPO 2</td>
+          <td>-</td><td>-</td><td>-</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- SAQUE -->
+  <div class="card">
+    <div class="card-title">Saque / Servicio</div>
+    <div class="serve-selector">
+      <button class="serve-btn" id="serve-btn-1" onclick="setServe(1)">
+        <div class="serve-dot-ui"></div>
+        <span id="serve-lbl-1">EQUIPO 1</span>
+      </button>
+      <button class="serve-btn" id="serve-btn-2" onclick="setServe(2)">
+        <div class="serve-dot-ui"></div>
+        <span id="serve-lbl-2">EQUIPO 2</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- VISIBILIDAD Y CONTROL -->
+  <div class="card">
+    <div class="card-title">Overlay vMix</div>
+    <div class="visibility-row" style="margin-bottom:10px;">
+      <button class="btn btn-show" onclick="showOverlay()">▶ MOSTRAR</button>
+      <button class="btn btn-hide" onclick="hideOverlay()">■ OCULTAR</button>
+    </div>
+    <div class="controls-row">
+      <button class="btn btn-warn" onclick="resetMatch()">🔄 NUEVO PARTIDO</button>
+      <button class="btn btn-danger" onclick="confirmMatchOver()">🏆 FIN PARTIDO</button>
+      <button class="btn btn-neutral" onclick="copyInstructions()">📋 INSTRUCCIONES</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const MAX_SETS = 3;
+
+let state = {
+  team1: 'EQUIPO 1',
+  team2: 'EQUIPO 2',
+  games1: 0,
+  games2: 0,
+  sets1: [],
+  sets2: [],
+  serving: 1,
+  visible: true,
+  tiebreak: false,
+  matchOver: false,
+  winner: '',
+  _ts: Date.now()
+};
+
+function broadcast() {
+  state._ts = Date.now();
+  try {
+    localStorage.setItem('padel_state', JSON.stringify(state));
+  } catch(e) {}
+  try {
+    const bc = new BroadcastChannel('padel_scoreboard');
+    bc.postMessage({ type: 'STATE_UPDATE', state });
+    bc.close();
+  } catch(e) {}
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+function addGame(team) {
+  if (team === 1) state.games1++;
+  else state.games2++;
+  broadcast();
+  updateUI();
+}
+
+function subGame(team) {
+  if (team === 1 && state.games1 > 0) state.games1--;
+  else if (team === 2 && state.games2 > 0) state.games2--;
+  broadcast();
+  updateUI();
+}
+
+function resetGames() {
+  state.games1 = 0;
+  state.games2 = 0;
+  state.tiebreak = false;
+  broadcast();
+  updateUI();
+  showToast('Games reseteados');
+}
+
+function finishSet() {
+  if (state.sets1.length >= MAX_SETS) { showToast('Máximo de sets alcanzado'); return; }
+  state.sets1.push(state.games1);
+  state.sets2.push(state.games2);
+  state.games1 = 0;
+  state.games2 = 0;
+  state.tiebreak = false;
+  broadcast();
+  updateUI();
+  showToast('✓ Set cerrado');
+}
+
+function setServe(team) {
+  state.serving = team;
+  broadcast();
+  updateUI();
+  showToast('Saque: ' + (team === 1 ? state.team1 : state.team2));
+}
+
+function toggleTiebreak() {
+  state.tiebreak = !state.tiebreak;
+  broadcast();
+  updateUI();
+}
+
+function showOverlay() {
+  state.visible = true;
+  broadcast();
+  updateUI();
+  showToast('▶ Overlay visible');
+}
+
+function hideOverlay() {
+  state.visible = false;
+  broadcast();
+  updateUI();
+  showToast('■ Overlay oculto');
+}
+
+function resetMatch() {
+  if (!confirm('¿Reiniciar partido completo?')) return;
+  state.games1 = 0;
+  state.games2 = 0;
+  state.sets1 = [];
+  state.sets2 = [];
+  state.serving = 1;
+  state.tiebreak = false;
+  state.matchOver = false;
+  state.winner = '';
+  broadcast();
+  updateUI();
+  showToast('🔄 Nuevo partido');
+}
+
+function confirmMatchOver() {
+  const sets1Won = state.sets1.filter((s,i) => s > state.sets2[i]).length;
+  const sets2Won = state.sets2.filter((s,i) => s > state.sets1[i]).length;
+  let winner = sets1Won > sets2Won ? state.team1 : (sets2Won > sets1Won ? state.team2 : 'EMPATE');
+  state.matchOver = true;
+  state.winner = winner;
+  broadcast();
+  updateUI();
+  showToast('🏆 Fin de partido: ' + winner);
+}
+
+function copyInstructions() {
+  const msg = `INSTRUCCIONES vMix PADEL SCOREBOARD\n\n1. OVERLAY (transparente):\n   - Agregar "Web Browser Input"\n   - URL: overlay-vmix.html (abrirlo localmente)\n   - Resolución: 1920x1080\n   - Activar transparencia\n\n2. PANEL CONTROL REMOTO:\n   - Abrir control-panel.html en cualquier navegador\n   - Funciona en celular, tablet o PC\n   - Mismo navegador = comunicación instantánea\n   - Distintas PCs = usar servidor local (ej: WAMP, npx serve)\n\n3. COMUNICACIÓN:\n   - Mismo equipo: BroadcastChannel (automático)\n   - Red local: usar servidor HTTP y localStorage\n\n¡Listo para transmitir!`;
+  navigator.clipboard.writeText(msg).then(() => showToast('📋 Instrucciones copiadas'));
+}
+
+function updateUI() {
+  // Names
+  document.getElementById('inp-t1').value = state.team1;
+  document.getElementById('inp-t2').value = state.team2;
+  document.getElementById('lbl-t1').textContent = state.team1;
+  document.getElementById('lbl-t2').textContent = state.team2;
+  document.getElementById('serve-lbl-1').textContent = state.team1;
+  document.getElementById('serve-lbl-2').textContent = state.team2;
+
+  // Games display
+  document.getElementById('disp-g1').textContent = state.games1;
+  document.getElementById('disp-g2').textContent = state.games2;
+
+  // Preview
+  document.getElementById('prev-t1').textContent = state.team1.toUpperCase();
+  document.getElementById('prev-t2').textContent = state.team2.toUpperCase();
+  document.getElementById('prev-games').textContent = state.games1 + ' — ' + state.games2;
+
+  // Preview sets
+  const ps1 = document.getElementById('prev-sets1');
+  const ps2 = document.getElementById('prev-sets2');
+  ps1.innerHTML = '';
+  ps2.innerHTML = '';
+  state.sets1.forEach((s, i) => {
+    const e1 = document.createElement('span');
+    const e2 = document.createElement('span');
+    e1.className = 'preview-set' + (s > state.sets2[i] ? ' won' : '');
+    e2.className = 'preview-set' + (state.sets2[i] > s ? ' won' : '');
+    e1.textContent = s + ' ';
+    e2.textContent = state.sets2[i] + ' ';
+    ps1.appendChild(e1);
+    ps2.appendChild(e2);
+  });
+
+  // Tiebreak
+  const tb = document.getElementById('tb-toggle');
+  tb.classList.toggle('on', state.tiebreak);
+  document.getElementById('prev-sub').textContent = state.tiebreak ? 'TIEBREAK' : 'GAMES';
+
+  // Serve
+  document.getElementById('serve-btn-1').classList.toggle('active', state.serving === 1);
+  document.getElementById('serve-btn-2').classList.toggle('active', state.serving === 2);
+
+  // Sets table
+  const tbody = document.getElementById('sets-tbody');
+  tbody.innerHTML = '';
+  const t1Row = document.createElement('tr');
+  const t2Row = document.createElement('tr');
+  const n1 = document.createElement('td');
+  const n2 = document.createElement('td');
+  n1.textContent = state.team1.toUpperCase();
+  n2.textContent = state.team2.toUpperCase();
+  t1Row.appendChild(n1);
+  t2Row.appendChild(n2);
+
+  for (let i = 0; i < MAX_SETS; i++) {
+    const c1 = document.createElement('td');
+    const c2 = document.createElement('td');
+    if (i < state.sets1.length) {
+      c1.textContent = state.sets1[i];
+      c2.textContent = state.sets2[i];
+      if (state.sets1[i] > state.sets2[i]) { c1.className = 'won'; c2.className = 'lost'; }
+      else if (state.sets2[i] > state.sets1[i]) { c2.className = 'won'; c1.className = 'lost'; }
+    } else if (i === state.sets1.length) {
+      c1.textContent = state.games1;
+      c2.textContent = state.games2;
+      c1.className = 'current';
+      c2.className = 'current';
+    } else {
+      c1.textContent = '—';
+      c2.textContent = '—';
+      c1.style.color = 'var(--text-dim)';
+      c2.style.color = 'var(--text-dim)';
+      c1.style.fontSize = '14px';
+      c2.style.fontSize = '14px';
+    }
+    t1Row.appendChild(c1);
+    t2Row.appendChild(c2);
+  }
+  tbody.appendChild(t1Row);
+  tbody.appendChild(t2Row);
+}
+
+// Input listeners
+document.getElementById('inp-t1').addEventListener('input', e => {
+  state.team1 = e.target.value || 'EQUIPO 1';
+  broadcast();
+  updateUI();
+});
+
+document.getElementById('inp-t2').addEventListener('input', e => {
+  state.team2 = e.target.value || 'EQUIPO 2';
+  broadcast();
+  updateUI();
+});
+
+// Init
+updateUI();
+</script>
+</body>
+</html>
