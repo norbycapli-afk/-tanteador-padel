@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel de Control v2 - Overlay Noticiero</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    background: #0a0a0f;
+    color: #e0e0e0;
+    min-height: 100vh;
+    padding: 20px 20px 60px 20px;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 20px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid #1f1f2e;
+  }
+
+  .header h1 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #e63946;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .header p {
+    font-size: 11px;
+    color: #666;
+    margin-top: 3px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    gap: 14px;
+    max-width: 1500px;
+    margin: 0 auto;
+  }
+
+  .card {
+    background: #12121a;
+    border: 1px solid #1f1f2e;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .card-header {
+    background: linear-gradient(90deg, #e63946 0%, #b91c1c 100%);
+    padding: 9px 14px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-header .icon { font-size: 14px; }
+
+  .card-header.blue { background: linear-gradient(90deg, #1d4ed8 0%, #1e40af 100%); }
+  .card-header.green { background: linear-gradient(90deg, #16a34a 0%, #15803d 100%); }
+  .card-header.gold { background: linear-gradient(90deg, #ca8a04 0%, #a16207 100%); }
+  .card-header.purple { background: linear-gradient(90deg, #7c3aed 0%, #6d28d9 100%); }
+  .card-header.cyan { background: linear-gradient(90deg, #0891b2 0%, #0e7490 100%); }
+  .card-header.orange { background: linear-gradient(90deg, #ea580c 0%, #c2410c 100%); }
+
+  .card-body { padding: 14px; }
+
+  .form-group { margin-bottom: 12px; }
+  .form-group:last-child { margin-bottom: 0; }
+
+  .form-label {
+    display: block;
+    font-size: 10px;
+    font-weight: 600;
+    color: #777;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+  }
+
+  .form-input {
+    width: 100%;
+    padding: 9px 11px;
+    border: 1px solid #2a2a3a;
+    border-radius: 6px;
+    background: #0a0a0f;
+    color: #ddd;
+    font-size: 13px;
+    font-family: inherit;
+    transition: border-color 0.15s;
+  }
+
+  .form-input:focus { outline: none; border-color: #e63946; }
+  .form-input::placeholder { color: #444; }
+
+  textarea.form-input { min-height: 55px; resize: vertical; }
+
+  .form-input-small { max-width: 100px; text-align: center; }
+
+  .btn-row { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  .btn {
+    padding: 9px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .btn-primary { background: #e63946; color: #fff; }
+  .btn-primary:hover { background: #c53030; }
+  .btn-secondary { background: #1f1f2e; color: #aaa; border: 1px solid #2a2a3a; }
+  .btn-secondary:hover { background: #2a2a3a; }
+  .btn-success { background: #16a34a; color: #fff; }
+  .btn-success:hover { background: #15803d; }
+  .btn-danger { background: #dc2626; color: #fff; }
+  .btn-danger:hover { background: #b91c1c; }
+  .btn-warning { background: #f59e0b; color: #000; }
+  .btn-warning:hover { background: #d97706; }
+  .btn-info { background: #1d4ed8; color: #fff; }
+  .btn-info:hover { background: #1e40af; }
+  .btn-block { width: 100%; justify-content: center; }
+  .btn-small { padding: 6px 10px; font-size: 11px; }
+
+  .color-picker { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  .color-swatch {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid transparent;
+    transition: all 0.15s;
+  }
+  .color-swatch:hover { transform: scale(1.1); }
+  .color-swatch.active { border-color: #fff; box-shadow: 0 0 0 2px #e63946; }
+  .color-swatch.red { background: #e63946; }
+  .color-swatch.blue { background: #1d4ed8; }
+  .color-swatch.green { background: #16a34a; }
+  .color-swatch.gold { background: #ca8a04; }
+  .color-swatch.purple { background: #7c3aed; }
+  .color-swatch.cyan { background: #0891b2; }
+  .color-swatch.orange { background: #ea580c; }
+  .color-swatch.pink { background: #db2777; }
+
+  .preset-row { display: flex; gap: 5px; flex-wrap: wrap; }
+
+  .preset-chip {
+    padding: 5px 10px;
+    border-radius: 16px;
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid #2a2a3a;
+    background: #12121a;
+    color: #888;
+    transition: all 0.15s;
+  }
+  .preset-chip:hover, .preset-chip.active { background: #e63946; color: #fff; border-color: #e63946; }
+
+  .section-divider { height: 1px; background: #1f1f2e; margin: 10px 0; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+
+  .toggle-switch {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+  }
+  .toggle-switch input { display: none; }
+  .toggle-slider {
+    width: 36px;
+    height: 20px;
+    background: #333;
+    border-radius: 10px;
+    position: relative;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .toggle-slider::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 0.2s;
+  }
+  .toggle-switch input:checked + .toggle-slider { background: #e63946; }
+  .toggle-switch input:checked + .toggle-slider::after { transform: translateX(16px); }
+  .toggle-label { font-size: 11px; color: #aaa; }
+
+  .preview-box {
+    background: #0a0a0f;
+    border: 1px solid #2a2a3a;
+    border-radius: 6px;
+    padding: 10px;
+    font-size: 12px;
+    color: #777;
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+  .preview-box .preview-title { font-size: 15px; font-weight: 700; color: #ddd; }
+  .preview-box .preview-sub { font-size: 11px; color: #666; margin-top: 2px; }
+
+  .ticker-list {
+    max-height: 160px;
+    overflow-y: auto;
+    border: 1px solid #2a2a3a;
+    border-radius: 6px;
+    background: #0a0a0f;
+    padding: 6px;
+  }
+
+  .ticker-list-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 7px;
+    border-radius: 4px;
+    margin-bottom: 3px;
+    font-size: 11px;
+  }
+  .ticker-list-item:last-child { margin-bottom: 0; }
+  .ticker-list-item:hover { background: #12121a; }
+  .ticker-cat { font-weight: 700; color: #e63946; text-transform: uppercase; font-size: 9px; min-width: 70px; }
+  .ticker-text { flex: 1; color: #bbb; }
+  .ticker-delete { background: none; border: none; color: #555; cursor: pointer; font-size: 13px; padding: 2px 5px; border-radius: 4px; }
+  .ticker-delete:hover { color: #dc2626; background: rgba(220,38,38,0.1); }
+
+  .quick-actions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+  .quick-btn {
+    padding: 7px;
+    border: 1px solid #2a2a3a;
+    border-radius: 6px;
+    background: #0a0a0f;
+    color: #888;
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+  }
+  .quick-btn:hover { background: #e63946; color: #fff; border-color: #e63946; }
+  .quick-btn.active { background: #e63946; color: #fff; border-color: #e63946; }
+
+  .anim-select {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+  .anim-btn {
+    padding: 5px 10px;
+    border: 1px solid #2a2a3a;
+    border-radius: 4px;
+    background: #0a0a0f;
+    color: #777;
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .anim-btn:hover { background: #1f1f2e; color: #ccc; }
+  .anim-btn.active { background: #e63946; color: #fff; border-color: #e63946; }
+
+  .timer-config {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+  }
+
+  .status-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #12121a;
+    border-top: 1px solid #1f1f2e;
+    padding: 8px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    z-index: 100;
+  }
+  .status-indicator { display: flex; align-items: center; gap: 6px; }
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #16a34a;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .status-text { color: #666; }
+  .status-text strong { color: #16a34a; }
+  .connection-url { display: flex; align-items: center; gap: 8px; }
+  .connection-url input {
+    background: #0a0a0f;
+    border: 1px solid #2a2a3a;
+    border-radius: 4px;
+    padding: 4px 8px;
+    color: #555;
+    font-size: 10px;
+    font-family: 'Courier New', monospace;
+    width: 260px;
+  }
+
+  .command-log {
+    background: #0a0a0f;
+    border: 1px solid #2a2a3a;
+    border-radius: 6px;
+    padding: 8px;
+    font-family: 'Courier New', monospace;
+    font-size: 10px;
+    color: #555;
+    min-height: 60px;
+    max-height: 100px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    line-height: 1.5;
+  }
+
+  .api-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .api-status.off { background: #1f1f2e; color: #666; }
+  .api-status.on { background: rgba(22,163,74,0.15); color: #16a34a; border: 1px solid rgba(22,163,74,0.3); }
+  .api-status.demo { background: rgba(202,138,4,0.15); color: #ca8a04; border: 1px solid rgba(202,138,4,0.3); }
+
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: #0a0a0f; }
+  ::-webkit-scrollbar-thumb { background: #2a2a3a; border-radius: 3px; }
+  body { padding-bottom: 45px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🎬 Panel de Control v2 — Overlay Noticiero</h1>
+  <p>Transiciones, cronómetro, API de noticias y control total del overlay</p>
+</div>
+
+<div class="grid">
+
+  <!-- ==================== LOWER THIRD ==================== -->
+  <div class="card">
+    <div class="card-header"><span class="icon">📺</span> Lower Third</div>
+    <div class="card-body">
+      <div class="form-group">
+        <label class="form-label">Etiqueta</label>
+        <div class="preset-row">
+          <div class="preset-chip active" onclick="setPresetLabel(this,'ÚLTIMA HORA')">ÚLTIMA HORA</div>
+          <div class="preset-chip" onclick="setPresetLabel(this,'EN VIVO')">EN VIVO</div>
+          <div class="preset-chip" onclick="setPresetLabel(this,'ALERTA')">ALERTA</div>
+          <div class="preset-chip" onclick="setPresetLabel(this,'EXCLUSIVA')">EXCLUSIVA</div>
+          <div class="preset-chip" onclick="setPresetLabel(this,'URGENTE')">URGENTE</div>
+          <div class="preset-chip" onclick="setPresetLabel(this,'DEPORTES')">DEPORTES</div>
+          <div class="preset-chip" onclick="setPresetLabel(this,'ECONOMÍA')">ECONOMÍA</div>
+          <div class="preset-chip" onclick="setPresetLabel(this,'CLIMA')">CLIMA</div>
+        </div>
+        <input type="text" class="form-input" id="lt-label-input" value="ÚLTIMA HORA" style="margin-top:6px;" placeholder="Etiqueta personalizada...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Título Principal</label>
+        <input type="text" class="form-input" id="lt-title-input" value="Titular principal del noticiero" placeholder="Escribe el titular...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Subtítulo</label>
+        <input type="text" class="form-input" id="lt-subtitle-input" value="Información complementaria del reporte en curso" placeholder="Escribe el subtítulo...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Transición de Entrada</label>
+        <div class="anim-select" id="lt-anim-in">
+          <div class="anim-btn active" data-anim="anim-slide-up" onclick="selectAnim(this,'lt-anim-in')">⬆️ Slide Up</div>
+          <div class="anim-btn" data-anim="anim-fade-in" onclick="selectAnim(this,'lt-anim-in')">✨ Fade</div>
+          <div class="anim-btn" data-anim="anim-scale-in" onclick="selectAnim(this,'lt-anim-in')">🔍 Scale</div>
+          <div class="anim-btn" data-anim="anim-slide-left" onclick="selectAnim(this,'lt-anim-in')">⬅️ Slide Left</div>
+          <div class="anim-btn" data-anim="anim-slide-right" onclick="selectAnim(this,'lt-anim-in')">➡️ Slide Right</div>
+          <div class="anim-btn" data-anim="anim-glitch" onclick="selectAnim(this,'lt-anim-in')">⚡ Glitch</div>
+          <div class="anim-btn" data-anim="anim-typewriter" onclick="selectAnim(this,'lt-anim-in')">⌨️ Typewriter</div>
+        </div>
+      </div>
+      <div class="preview-box" id="lt-preview">
+        <div>
+          <div class="preview-title" id="preview-title">Titular principal del noticiero</div>
+          <div class="preview-sub" id="preview-sub">Información complementaria del reporte en curso</div>
+        </div>
+      </div>
+      <div class="btn-row" style="margin-top:10px;">
+        <button class="btn btn-primary btn-block" onclick="sendLowerThird()">🚀 Enviar al Overlay</button>
+        <button class="btn btn-danger btn-small" onclick="clearLowerThird()">🗑️ Limpiar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== LOGO & COLOR ==================== -->
+  <div class="card">
+    <div class="card-header blue"><span class="icon">🎨</span> Logo & Color</div>
+    <div class="card-body">
+      <div class="form-group">
+        <label class="form-label">Texto del Logo</label>
+        <input type="text" class="form-input" id="logo-input" value="TV" placeholder="Ej: NEWS, TV, CANAL 5...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Color de Acento</label>
+        <div class="color-picker">
+          <div class="color-swatch red active" data-color="#e63946" onclick="selectColor(this)"></div>
+          <div class="color-swatch blue" data-color="#1d4ed8" onclick="selectColor(this)"></div>
+          <div class="color-swatch green" data-color="#16a34a" onclick="selectColor(this)"></div>
+          <div class="color-swatch gold" data-color="#ca8a04" onclick="selectColor(this)"></div>
+          <div class="color-swatch purple" data-color="#7c3aed" onclick="selectColor(this)"></div>
+          <div class="color-swatch cyan" data-color="#0891b2" onclick="selectColor(this)"></div>
+          <div class="color-swatch orange" data-color="#ea580c" onclick="selectColor(this)"></div>
+          <div class="color-swatch pink" data-color="#db2777" onclick="selectColor(this)"></div>
+        </div>
+        <input type="text" class="form-input" id="custom-color" value="#e63946" style="margin-top:6px; font-family:monospace; font-size:12px;" placeholder="#e63946">
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary btn-block" onclick="sendLogoColor()">🎨 Aplicar Logo & Color</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== CRONÓMETRO ==================== -->
+  <div class="card">
+    <div class="card-header green"><span class="icon">⏱️</span> Cronómetro / Timer</div>
+    <div class="card-body">
+      <div class="form-group">
+        <label class="form-label">Configuración</label>
+        <div class="timer-config">
+          <div>
+            <label class="form-label" style="font-size:9px;">Minutos</label>
+            <input type="number" class="form-input form-input-small" id="timer-min" value="5" min="0" max="99">
+          </div>
+          <div>
+            <label class="form-label" style="font-size:9px;">Segundos</label>
+            <input type="number" class="form-input form-input-small" id="timer-sec" value="0" min="0" max="59">
+          </div>
+          <div>
+            <label class="form-label" style="font-size:9px;">Dirección</label>
+            <select class="form-input" id="timer-dir" style="font-size:12px; padding:8px;">
+              <option value="down">⬇️ Cuenta Regresiva</option>
+              <option value="up">⬆️ Cuenta Progresiva</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Etiqueta del Timer</label>
+        <input type="text" class="form-input" id="timer-label-input" value="CUENTA REGRESIVA" placeholder="Ej: TIEMPO RESTANTE...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Alertas Visuales</label>
+        <div class="two-col">
+          <div>
+            <label class="form-label" style="font-size:9px;">Warning (seg)</label>
+            <input type="number" class="form-input form-input-small" id="timer-warning" value="30" min="0">
+          </div>
+          <div>
+            <label class="form-label" style="font-size:9px;">Danger (seg)</label>
+            <input type="number" class="form-input form-input-small" id="timer-danger" value="10" min="0">
+          </div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-success btn-block" onclick="startTimer()">▶️ Iniciar Timer</button>
+        <button class="btn btn-warning btn-small" onclick="pauseTimer()">⏸️ Pausa</button>
+        <button class="btn btn-danger btn-small" onclick="stopTimer()">⏹️ Detener</button>
+        <button class="btn btn-secondary btn-small" onclick="resetTimer()">🔄 Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== NEWS TICKER ==================== -->
+  <div class="card">
+    <div class="card-header gold"><span class="icon">📰</span> News Ticker</div>
+    <div class="card-body">
+      <div class="form-group">
+        <label class="form-label">Categoría</label>
+        <div class="preset-row">
+          <div class="preset-chip active" onclick="setTickerCat(this,'INTERNACIONAL')">INTERNACIONAL</div>
+          <div class="preset-chip" onclick="setTickerCat(this,'ECONOMÍA')">ECONOMÍA</div>
+          <div class="preset-chip" onclick="setTickerCat(this,'DEPORTES')">DEPORTES</div>
+          <div class="preset-chip" onclick="setTickerCat(this,'CLIMA')">CLIMA</div>
+          <div class="preset-chip" onclick="setTickerCat(this,'TECNOLOGÍA')">TECNOLOGÍA</div>
+          <div class="preset-chip" onclick="setTickerCat(this,'SALUD')">SALUD</div>
+          <div class="preset-chip" onclick="setTickerCat(this,'CULTURA')">CULTURA</div>
+          <div class="preset-chip" onclick="setTickerCat(this,'URGENTE')">URGENTE</div>
+        </div>
+        <input type="text" class="form-input" id="ticker-cat-input" value="INTERNACIONAL" style="margin-top:6px;" placeholder="Categoría...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Texto de la Noticia</label>
+        <input type="text" class="form-input" id="ticker-text-input" placeholder="Escribe la noticia...">
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-success btn-small" onclick="addTickerItem()">➕ Agregar</button>
+        <button class="btn btn-secondary btn-small" onclick="clearAllTicker()">🗑️ Limpiar Todo</button>
+      </div>
+      <div class="section-divider"></div>
+      <div class="form-group">
+        <label class="form-label">Noticias en Ticker</label>
+        <div class="ticker-list" id="ticker-list"></div>
+      </div>
+      <div class="btn-row" style="margin-top:8px;">
+        <button class="btn btn-primary btn-block" onclick="sendTicker()">📰 Enviar Ticker</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== API DE NOTICIAS ==================== -->
+  <div class="card">
+    <div class="card-header cyan"><span class="icon">🌐</span> API de Noticias (Auto-Feed)</div>
+    <div class="card-body">
+      <div class="form-group">
+        <div class="api-status off" id="api-status">
+          <span>🔴</span> API: Desactivada
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fuente de Noticias</label>
+        <div class="preset-row">
+          <div class="preset-chip active" onclick="setAPISource(this,'demo')">🎲 Demo (Aleatorio)</div>
+          <div class="preset-chip" onclick="setAPISource(this,'newsapi')">📡 NewsAPI.org</div>
+          <div class="preset-chip" onclick="setAPISource(this,'gnews')">📡 GNews</div>
+        </div>
+      </div>
+      <div class="form-group" id="api-key-group" style="display:none;">
+        <label class="form-label">API Key</label>
+        <input type="text" class="form-input" id="api-key" placeholder="Ingresa tu API key...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Intervalo de Actualización</label>
+        <div class="two-col">
+          <select class="form-input" id="api-interval">
+            <option value="15">15 segundos</option>
+            <option value="30" selected>30 segundos</option>
+            <option value="60">1 minuto</option>
+            <option value="120">2 minutos</option>
+            <option value="300">5 minutos</option>
+          </select>
+          <select class="form-input" id="api-category">
+            <option value="general">General</option>
+            <option value="business">Negocios</option>
+            <option value="technology">Tecnología</option>
+            <option value="sports">Deportes</option>
+            <option value="science">Ciencia</option>
+            <option value="health">Salud</option>
+            <option value="entertainment">Entretenimiento</option>
+          </select>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-success btn-block" onclick="startAPI()">▶️ Iniciar Feed Automático</button>
+        <button class="btn btn-danger btn-small" onclick="stopAPI()">⏹️ Detener</button>
+      </div>
+      <div class="section-divider"></div>
+      <div class="form-group">
+        <label class="form-label">Noticia Manual (Breaking)</label>
+        <input type="text" class="form-input" id="breaking-text" placeholder="Texto de noticia de última hora...">
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-warning btn-block" onclick="sendBreakingNews()">🚨 Enviar Breaking News</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== PANEL LATERAL ==================== -->
+  <div class="card">
+    <div class="card-header purple"><span class="icon">👤</span> Panel Lateral</div>
+    <div class="card-body">
+      <div class="form-group">
+        <div class="toggle-switch" onclick="toggleSidePanel()">
+          <input type="checkbox" id="side-panel-toggle">
+          <div class="toggle-slider"></div>
+          <span class="toggle-label">Mostrar Panel</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nombre</label>
+        <input type="text" class="form-input" id="side-name" value="Dr. María González" placeholder="Nombre completo...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Cargo / Rol</label>
+        <input type="text" class="form-input" id="side-role" value="Especialista en Salud Pública" placeholder="Ej: Analista Político...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Información</label>
+        <textarea class="form-input" id="side-info" placeholder="Breve descripción...">Directora del Instituto Nacional de Epidemiología con 15 años de experiencia.</textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Transición</label>
+        <div class="anim-select" id="side-anim-in">
+          <div class="anim-btn active" data-anim="anim-slide-left" onclick="selectAnim(this,'side-anim-in')">⬅️ Slide Left</div>
+          <div class="anim-btn" data-anim="anim-fade-in" onclick="selectAnim(this,'side-anim-in')">✨ Fade</div>
+          <div class="anim-btn" data-anim="anim-scale-in" onclick="selectAnim(this,'side-anim-in')">🔍 Scale</div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary btn-block" onclick="sendSidePanel()">👤 Enviar Panel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== PRESETS & VISIBILIDAD ==================== -->
+  <div class="card">
+    <div class="card-header orange"><span class="icon">⚡</span> Presets & Visibilidad</div>
+    <div class="card-body">
+      <div class="form-group">
+        <label class="form-label">Presets Rápidos</label>
+        <div class="quick-actions">
+          <button class="quick-btn" onclick="loadPreset('noticiero')">📺 Noticiero</button>
+          <button class="quick-btn" onclick="loadPreset('envivo')">🔴 En Vivo</button>
+          <button class="quick-btn" onclick="loadPreset('alerta')">🚨 Alerta</button>
+          <button class="quick-btn" onclick="loadPreset('exclusiva')">⭐ Exclusiva</button>
+          <button class="quick-btn" onclick="loadPreset('deportes')">⚽ Deportes</button>
+          <button class="quick-btn" onclick="loadPreset('economia')">💰 Economía</button>
+          <button class="quick-btn" onclick="loadPreset('clima')">🌤️ Clima</button>
+          <button class="quick-btn" onclick="loadPreset('blank')">⬜ Limpiar</button>
+        </div>
+      </div>
+      <div class="section-divider"></div>
+      <div class="form-group">
+        <label class="form-label">Visibilidad de Elementos</label>
+        <div class="two-col">
+          <div class="toggle-switch" onclick="toggleElement('live')">
+            <input type="checkbox" id="toggle-live" checked>
+            <div class="toggle-slider"></div>
+            <span class="toggle-label">Badge EN VIVO</span>
+          </div>
+          <div class="toggle-switch" onclick="toggleElement('clock')">
+            <input type="checkbox" id="toggle-clock" checked>
+            <div class="toggle-slider"></div>
+            <span class="toggle-label">Reloj</span>
+          </div>
+          <div class="toggle-switch" onclick="toggleElement('lowerthird')">
+            <input type="checkbox" id="toggle-lowerthird" checked>
+            <div class="toggle-slider"></div>
+            <span class="toggle-label">Lower Third</span>
+          </div>
+          <div class="toggle-switch" onclick="toggleElement('ticker')">
+            <input type="checkbox" id="toggle-ticker" checked>
+            <div class="toggle-slider"></div>
+            <span class="toggle-label">News Ticker</span>
+          </div>
+          <div class="toggle-switch" onclick="toggleElement('timer')">
+            <input type="checkbox" id="toggle-timer">
+            <div class="toggle-slider"></div>
+            <span class="toggle-label">Cronómetro</span>
+          </div>
+          <div class="toggle-switch" onclick="toggleElement('breaking')">
+            <input type="checkbox" id="toggle-breaking">
+            <div class="toggle-slider"></div>
+            <span class="toggle-label">Breaking Banner</span>
+          </div>
+          <div class="toggle-switch" onclick="toggleElement('sidepanel')">
+            <input type="checkbox" id="toggle-sidepanel">
+            <div class="toggle-slider"></div>
+            <span class="toggle-label">Panel Lateral</span>
+          </div>
+        </div>
+      </div>
+      <div class="btn-row" style="margin-top:10px;">
+        <button class="btn btn-primary btn-block" onclick="sendVisibility()">👁️ Aplicar Visibilidad</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== TRANSICIONES ==================== -->
+  <div class="card">
+    <div class="card-header"><span class="icon">🎬</span> Transiciones Animadas</div>
+    <div class="card-body">
+      <div class="form-group">
+        <label class="form-label">Animar Elemento</label>
+        <div class="three-col">
+          <select class="form-input" id="anim-target">
+            <option value="live-badge">Badge EN VIVO</option>
+            <option value="clock">Reloj</option>
+            <option value="lower-third" selected>Lower Third</option>
+            <option value="ticker-container">News Ticker</option>
+            <option value="timer-container">Cronómetro</option>
+            <option value="breaking-banner">Breaking Banner</option>
+            <option value="side-panel">Panel Lateral</option>
+          </select>
+          <select class="form-input" id="anim-action">
+            <option value="show">Mostrar</option>
+            <option value="hide">Ocultar</option>
+            <option value="animate">Animar</option>
+          </select>
+          <select class="form-input" id="anim-type">
+            <option value="anim-slide-up">⬆️ Slide Up</option>
+            <option value="anim-slide-down">⬇️ Slide Down</option>
+            <option value="anim-fade-in">✨ Fade In</option>
+            <option value="anim-fade-out">💨 Fade Out</option>
+            <option value="anim-scale-in">🔍 Scale In</option>
+            <option value="anim-slide-left">⬅️ Slide Left</option>
+            <option value="anim-slide-right">➡️ Slide Right</option>
+            <option value="anim-glitch">⚡ Glitch</option>
+          </select>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary btn-block" onclick="sendAnimation()">🎬 Ejecutar Transición</button>
+      </div>
+      <div class="section-divider"></div>
+      <div class="form-group">
+        <label class="form-label">Atajos de Teclado</label>
+        <div style="font-size:11px; color:#666; line-height:1.8;">
+          <div><kbd style="background:#1f1f2e; padding:2px 6px; border-radius:3px; font-family:monospace;">Ctrl+1</kbd> → Preset Noticiero</div>
+          <div><kbd style="background:#1f1f2e; padding:2px 6px; border-radius:3px; font-family:monospace;">Ctrl+2</kbd> → Preset En Vivo</div>
+          <div><kbd style="background:#1f1f2e; padding:2px 6px; border-radius:3px; font-family:monospace;">Ctrl+3</kbd> → Preset Alerta</div>
+          <div><kbd style="background:#1f1f2e; padding:2px 6px; border-radius:3px; font-family:monospace;">Ctrl+Enter</kbd> → Enviar Lower Third</div>
+          <div><kbd style="background:#1f1f2e; padding:2px 6px; border-radius:3px; font-family:monospace;">Ctrl+Space</kbd> → Iniciar/Detener Timer</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== LOG DE COMANDOS ==================== -->
+  <div class="card">
+    <div class="card-header" style="background:linear-gradient(90deg,#444 0%,#333 100%);"><span class="icon">📋</span> Log de Comandos</div>
+    <div class="card-body">
+      <div class="command-log" id="command-log">Esperando comandos...
+El panel se comunica con el overlay vía localStorage + postMessage.</div>
+      <div class="btn-row" style="margin-top:8px;">
+        <button class="btn btn-secondary btn-small" onclick="clearLog()">🗑️ Limpiar Log</button>
+        <button class="btn btn-secondary btn-small" onclick="copyLastCommand()">📋 Copiar Último</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ==================== STATUS BAR ==================== -->
+<div class="status-bar">
+  <div class="status-indicator">
+    <div class="status-dot"></div>
+    <span class="status-text">Overlay: <strong>Conectado</strong></span>
+  </div>
+  <div class="connection-url">
+    <span style="color:#555; font-size:10px;">URL Overlay:</span>
+    <input type="text" id="overlay-url" value="http://localhost:8080/overlay_noticiero_v2.html" readonly>
+  </div>
+</div>
+
+<script>
+  // ==================== VARIABLES ====================
+  let currentColor = '#e63946';
+  let tickerItems = [
+    {category:'INTERNACIONAL', text:'Cumbre de líderes europeos inicia mañana en Bruselas'},
+    {category:'ECONOMÍA', text:'Bolsa cierra con alza del 1.2% en jornada positiva'},
+    {category:'DEPORTES', text:'Final de Copa se juega este fin de semana'}
+  ];
+  let apiSource = 'demo';
+  let apiRunning = false;
+  let ltAnimIn = 'anim-slide-up';
+  let sideAnimIn = 'anim-slide-left';
+
+  // ==================== COMUNICACIÓN ====================
+  function sendToOverlay(command, data) {
+    const payload = { command, data, timestamp: new Date().toISOString() };
+
+    // 1. postMessage
+    try {
+      const overlay = window.open('', 'overlay_noticiero');
+      if (overlay && overlay !== window) overlay.postMessage(payload, '*');
+    } catch(e) {}
+
+    // 2. localStorage
+    localStorage.setItem('overlay_command', JSON.stringify(payload));
+    localStorage.setItem('overlay_command_time', Date.now().toString());
+
+    // 3. Log
+    logCommand(JSON.stringify(payload, null, 2));
+  }
+
+  function logCommand(text) {
+    const log = document.getElementById('command-log');
+    const time = new Date().toLocaleTimeString();
+    log.textContent = `[${time}] ${text}
+
+` + log.textContent;
+  }
+
+  function clearLog() {
+    document.getElementById('command-log').textContent = 'Log limpiado...';
+  }
+
+  function copyLastCommand() {
+    const log = document.getElementById('command-log').textContent;
+    navigator.clipboard.writeText(log.split('
+
+')[0]);
+  }
+
+  // ==================== LOWER THIRD ====================
+  function setPresetLabel(el, text) {
+    el.parentElement.querySelectorAll('.preset-chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('lt-label-input').value = text;
+    updatePreview();
+  }
+
+  function selectAnim(el, groupId) {
+    document.getElementById(groupId).querySelectorAll('.anim-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    if (groupId === 'lt-anim-in') ltAnimIn = el.dataset.anim;
+    if (groupId === 'side-anim-in') sideAnimIn = el.dataset.anim;
+  }
+
+  function updatePreview() {
+    document.getElementById('preview-title').textContent = document.getElementById('lt-title-input').value || 'Titular...';
+    document.getElementById('preview-sub').textContent = document.getElementById('lt-subtitle-input').value || 'Subtítulo...';
+  }
+
+  document.getElementById('lt-title-input').addEventListener('input', updatePreview);
+  document.getElementById('lt-subtitle-input').addEventListener('input', updatePreview);
+
+  function sendLowerThird() {
+    const data = {
+      label: document.getElementById('lt-label-input').value,
+      title: document.getElementById('lt-title-input').value,
+      subtitle: document.getElementById('lt-subtitle-input').value
+    };
+    sendToOverlay('setLowerThird', data);
+    sendToOverlay('animateElement', {id: 'lower-third', animation: ltAnimIn});
+  }
+
+  function clearLowerThird() {
+    document.getElementById('lt-label-input').value = '';
+    document.getElementById('lt-title-input').value = '';
+    document.getElementById('lt-subtitle-input').value = '';
+    updatePreview();
+    sendToOverlay('clearLowerThird', {});
+  }
+
+  // ==================== LOGO & COLOR ====================
+  function selectColor(el) {
+    document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+    el.classList.add('active');
+    currentColor = el.dataset.color;
+    document.getElementById('custom-color').value = currentColor;
+  }
+
+  document.getElementById('custom-color').addEventListener('input', function() {
+    currentColor = this.value;
+    document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+  });
+
+  function sendLogoColor() {
+    const data = {
+      logo: document.getElementById('logo-input').value,
+      color: currentColor
+    };
+    sendToOverlay('setLogoColor', data);
+  }
+
+  // ==================== CRONÓMETRO ====================
+  function startTimer() {
+    const min = parseInt(document.getElementById('timer-min').value) || 0;
+    const sec = parseInt(document.getElementById('timer-sec').value) || 0;
+    const totalSeconds = min * 60 + sec;
+    const dir = document.getElementById('timer-dir').value;
+    const label = document.getElementById('timer-label-input').value;
+    const warning = parseInt(document.getElementById('timer-warning').value) || 30;
+    const danger = parseInt(document.getElementById('timer-danger').value) || 10;
+
+    sendToOverlay('startTimer', {
+      seconds: totalSeconds,
+      label: label,
+      direction: dir,
+      warning: warning,
+      danger: danger
+    });
+  }
+
+  function pauseTimer() { sendToOverlay('pauseTimer', {}); }
+  function stopTimer() { sendToOverlay('stopTimer', {}); }
+  function resetTimer() { sendToOverlay('resetTimer', {}); }
+
+  // ==================== TICKER ====================
+  function setTickerCat(el, text) {
+    el.parentElement.querySelectorAll('.preset-chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('ticker-cat-input').value = text;
+  }
+
+  function addTickerItem() {
+    const cat = document.getElementById('ticker-cat-input').value;
+    const text = document.getElementById('ticker-text-input').value;
+    if (!text.trim()) return;
+    tickerItems.push({category: cat, text: text});
+    renderTickerList();
+    document.getElementById('ticker-text-input').value = '';
+  }
+
+  function removeTickerItem(btn) {
+    const idx = Array.from(btn.parentElement.parentElement.children).indexOf(btn.parentElement);
+    tickerItems.splice(idx, 1);
+    renderTickerList();
+  }
+
+  function clearAllTicker() { tickerItems = []; renderTickerList(); }
+
+  function renderTickerList() {
+    const list = document.getElementById('ticker-list');
+    list.innerHTML = tickerItems.map(item => `
+      <div class="ticker-list-item">
+        <span class="ticker-cat">${item.category}</span>
+        <span class="ticker-text">${item.text}</span>
+        <button class="ticker-delete" onclick="removeTickerItem(this)">×</button>
+      </div>
+    `).join('');
+  }
+
+  function sendTicker() { sendToOverlay('setTicker', {items: tickerItems}); }
+
+  // ==================== API ====================
+  function setAPISource(el, source) {
+    el.parentElement.querySelectorAll('.preset-chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    apiSource = source;
+    document.getElementById('api-key-group').style.display = (source === 'demo') ? 'none' : 'block';
+  }
+
+  function startAPI() {
+    apiRunning = true;
+    const interval = parseInt(document.getElementById('api-interval').value);
+    const status = document.getElementById('api-status');
+    status.className = 'api-status ' + (apiSource === 'demo' ? 'demo' : 'on');
+    status.innerHTML = `<span>${apiSource === 'demo' ? '🎲' : '📡'}</span> API: ${apiSource === 'demo' ? 'Demo Activo' : 'Conectado'}`;
+
+    sendToOverlay('startNewsAPI', {source: apiSource, interval: interval});
+  }
+
+  function stopAPI() {
+    apiRunning = false;
+    const status = document.getElementById('api-status');
+    status.className = 'api-status off';
+    status.innerHTML = '<span>🔴</span> API: Desactivada';
+    sendToOverlay('stopNewsAPI', {});
+  }
+
+  function sendBreakingNews() {
+    const text = document.getElementById('breaking-text').value;
+    if (!text.trim()) return;
+    sendToOverlay('showBreakingNews', {text: text, source: 'MANUAL', category: 'URGENTE'});
+    document.getElementById('breaking-text').value = '';
+  }
+
+  // ==================== SIDE PANEL ====================
+  function toggleSidePanel() {
+    const cb = document.getElementById('side-panel-toggle');
+    cb.checked = !cb.checked;
+  }
+
+  function sendSidePanel() {
+    const data = {
+      visible: document.getElementById('side-panel-toggle').checked,
+      name: document.getElementById('side-name').value,
+      role: document.getElementById('side-role').value,
+      info: document.getElementById('side-info').value
+    };
+    sendToOverlay('setSidePanel', data);
+    if (data.visible) {
+      sendToOverlay('animateElement', {id: 'side-panel', animation: sideAnimIn});
+    }
+  }
+
+  // ==================== VISIBILITY ====================
+  function toggleElement(id) {
+    const cb = document.getElementById('toggle-' + id);
+    cb.checked = !cb.checked;
+  }
+
+  function sendVisibility() {
+    const data = {
+      live: document.getElementById('toggle-live').checked,
+      clock: document.getElementById('toggle-clock').checked,
+      lowerThird: document.getElementById('toggle-lowerthird').checked,
+      ticker: document.getElementById('toggle-ticker').checked,
+      timer: document.getElementById('toggle-timer').checked,
+      breaking: document.getElementById('toggle-breaking').checked,
+      sidePanel: document.getElementById('toggle-sidepanel').checked
+    };
+    sendToOverlay('setVisibility', data);
+  }
+
+  // ==================== ANIMACIONES ====================
+  function sendAnimation() {
+    const target = document.getElementById('anim-target').value;
+    const action = document.getElementById('anim-action').value;
+    const type = document.getElementById('anim-type').value;
+
+    if (action === 'show') {
+      sendToOverlay('showElement', {id: target, animation: type});
+    } else if (action === 'hide') {
+      sendToOverlay('hideElement', {id: target, animation: type});
+    } else {
+      sendToOverlay('animateElement', {id: target, animation: type});
+    }
+  }
+
+  // ==================== PRESETS ====================
+  const presets = {
+    noticiero: { label:'ÚLTIMA HORA', title:'Titular principal del noticiero', subtitle:'Información complementaria del reporte en curso', logo:'TV', color:'#e63946', ticker:[{category:'INTERNACIONAL',text:'Cumbre de líderes europeos inicia mañana en Bruselas'},{category:'ECONOMÍA',text:'Bolsa cierra con alza del 1.2% en jornada positiva'},{category:'DEPORTES',text:'Final de Copa se juega este fin de semana'}] },
+    envivo: { label:'EN VIVO', title:'Conferencia de prensa en directo', subtitle:'Desde la sede del gobierno nacional', logo:'LIVE', color:'#dc2626', ticker:[{category:'URGENTE',text:'Sistema de emergencia activado en zona norte'},{category:'POLÍTICA',text:'Presidente anuncia nuevas medidas económicas'},{category:'SEGURIDAD',text:'Refuerzo policial en áreas metropolitanas'}] },
+    alerta: { label:'ALERTA', title:'Alerta meteorológica en efecto', subtitle:'Se recomienda precaución en zona afectada', logo:'⚠️', color:'#ea580c', ticker:[{category:'CLIMA',text:'Tormenta tropical se aproxima a la costa'},{category:'URGENTE',text:'Evacuación preventiva en zonas de riesgo'},{category:'TRÁNSITO',text:'Cierre de principales vías por inundaciones'}] },
+    exclusiva: { label:'EXCLUSIVA', title:'Entrevista exclusiva con fuente clave', subtitle:'Revelaciones sobre caso en investigación', logo:'⭐', color:'#ca8a04', ticker:[{category:'INVESTIGACIÓN',text:'Nuevos documentos salen a la luz pública'},{category:'JUDICIAL',text:'Fiscalía presenta evidencia contundente'},{category:'POLÍTICA',text:'Oposición exige respuestas inmediatas'}] },
+    deportes: { label:'DEPORTES', title:'Resultados de la jornada deportiva', subtitle:'Tabla de posiciones actualizada al cierre', logo:'⚽', color:'#16a34a', ticker:[{category:'FÚTBOL',text:'Líder del torneo mantiene invicto'},{category:'BÁSQUET',text:'Playoffs definidos para próxima semana'},{category:'TENIS',text:'Campeón defiende título en Grand Slam'}] },
+    economia: { label:'ECONOMÍA', title:'Mercados financieros al cierre', subtitle:'Análisis de la jornada bursátil', logo:'💰', color:'#1d4ed8', ticker:[{category:'BOLSA',text:'Índice principal sube 1.5% esta semana'},{category:'DIVISAS',text:'Dólar se estabiliza tras volatilidad'},{category:'COMMODITIES',text:'Petróleo registra leve alza internacional'}] },
+    clima: { label:'CLIMA', title:'Pronóstico del tiempo', subtitle:'Condiciones para las próximas 24 horas', logo:'🌤️', color:'#0891b2', ticker:[{category:'NACIONAL',text:'Temperaturas máximas de 32°C en el centro'},{category:'COSTA',text:'Probabilidad de lluvias aisladas por la tarde'},{category:'MONTAÑA',text:'Nevadas ligeras en zonas altas del país'}] },
+    blank: { label:'', title:'', subtitle:'', logo:'', color:'#e63946', ticker:[] }
+  };
+
+  function loadPreset(name) {
+    const p = presets[name];
+    if (!p) return;
+
+    document.getElementById('lt-label-input').value = p.label;
+    document.getElementById('lt-title-input').value = p.title;
+    document.getElementById('lt-subtitle-input').value = p.subtitle;
+    document.getElementById('logo-input').value = p.logo;
+
+    currentColor = p.color;
+    document.getElementById('custom-color').value = p.color;
+    document.querySelectorAll('.color-swatch').forEach(s => s.classList.toggle('active', s.dataset.color === p.color));
+
+    tickerItems = [...p.ticker];
+    renderTickerList();
+    updatePreview();
+
+    sendToOverlay('loadPreset', p);
+
+    document.querySelectorAll('.quick-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+  }
+
+  // ==================== INIT ====================
+  renderTickerList();
+  updatePreview();
+
+  document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey || e.metaKey) {
+      switch(e.key) {
+        case '1': e.preventDefault(); loadPreset('noticiero'); break;
+        case '2': e.preventDefault(); loadPreset('envivo'); break;
+        case '3': e.preventDefault(); loadPreset('alerta'); break;
+        case 'Enter': e.preventDefault(); sendLowerThird(); break;
+        case ' ': e.preventDefault(); startTimer(); break;
+      }
+    }
+  });
+
+  console.log('Panel de Control v2 cargado. Listo para controlar el overlay.');
+</script>
+
+</body>
+</html>

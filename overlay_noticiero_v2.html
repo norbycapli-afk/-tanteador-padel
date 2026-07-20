@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Overlay Noticiero TV v2</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    background: transparent;
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  :root {
+    --accent-color: #e63946;
+    --accent-dark: #b91c1c;
+    --bg-overlay: rgba(0, 0, 0, 0.88);
+    --bg-overlay-light: rgba(20, 20, 30, 0.85);
+    --text-primary: #ffffff;
+    --text-secondary: rgba(255, 255, 255, 0.7);
+    --ticker-bg: #0a0a0a;
+    --ticker-border: #2a2a2a;
+  }
+
+  /* ============================================
+     TRANSICIONES ANIMADAS
+     ============================================ */
+  .element-hidden { display: none !important; }
+
+  .anim-slide-up {
+    animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .anim-slide-down {
+    animation: slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .anim-fade-in {
+    animation: fadeIn 0.6s ease-out forwards;
+  }
+
+  .anim-fade-out {
+    animation: fadeOut 0.3s ease-in forwards;
+  }
+
+  .anim-scale-in {
+    animation: scaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+
+  .anim-slide-left {
+    animation: slideLeft 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .anim-slide-right {
+    animation: slideRight 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .anim-glitch {
+    animation: glitch 0.3s ease-in-out;
+  }
+
+  .anim-typewriter {
+    overflow: hidden;
+    white-space: nowrap;
+    animation: typewriter 1.5s steps(40, end) forwards;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(80px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  @keyframes slideDown {
+    from { transform: translateY(-60px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+  }
+
+  @keyframes scaleIn {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  @keyframes slideLeft {
+    from { transform: translateX(100px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+
+  @keyframes slideRight {
+    from { transform: translateX(-100px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+
+  @keyframes glitch {
+    0% { transform: translate(0); }
+    20% { transform: translate(-2px, 2px); }
+    40% { transform: translate(2px, -2px); }
+    60% { transform: translate(-1px, 1px); }
+    80% { transform: translate(1px, -1px); }
+    100% { transform: translate(0); }
+  }
+
+  @keyframes typewriter {
+    from { width: 0; }
+    to { width: 100%; }
+  }
+
+  @keyframes blink-live {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.3; transform: scale(0.8); }
+  }
+
+  @keyframes pulse-ring {
+    0% { transform: scale(1); opacity: 0.8; }
+    100% { transform: scale(2.5); opacity: 0; }
+  }
+
+  @keyframes ticker-scroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  @keyframes countdown-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+
+  /* ============================================
+     EN VIVO
+     ============================================ */
+  .live-badge {
+    position: absolute;
+    top: 30px;
+    left: 30px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 8px 16px;
+    border-radius: 6px;
+    z-index: 100;
+  }
+
+  .live-dot-container {
+    position: relative;
+    width: 10px;
+    height: 10px;
+  }
+
+  .live-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #ff3b3b;
+    animation: blink-live 1.2s ease-in-out infinite;
+    box-shadow: 0 0 8px rgba(255, 59, 59, 0.6);
+    position: relative;
+    z-index: 2;
+  }
+
+  .live-dot-ring {
+    position: absolute;
+    top: -3px;
+    left: -3px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid #ff3b3b;
+    animation: pulse-ring 2s ease-out infinite;
+  }
+
+  .live-text {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: #ff3b3b;
+    text-transform: uppercase;
+  }
+
+  /* ============================================
+     RELOJ
+     ============================================ */
+  .clock-display {
+    position: absolute;
+    top: 30px;
+    right: 30px;
+    font-size: 18px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    background: rgba(0, 0, 0, 0.6);
+    padding: 8px 18px;
+    border-radius: 6px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 2px;
+    z-index: 100;
+  }
+
+  /* ============================================
+     CRONÓMETRO / TIMER
+     ============================================ */
+  .timer-container {
+    position: absolute;
+    top: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+    display: none;
+  }
+
+  .timer-container.active { display: block; }
+
+  .timer-box {
+    background: linear-gradient(135deg, rgba(0,0,0,0.85) 0%, rgba(20,20,30,0.9) 100%);
+    backdrop-filter: blur(8px);
+    border: 2px solid var(--accent-color);
+    border-radius: 12px;
+    padding: 12px 28px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 200px;
+  }
+
+  .timer-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent-color);
+    margin-bottom: 4px;
+  }
+
+  .timer-display {
+    font-size: 42px;
+    font-weight: 700;
+    color: #fff;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 4px;
+    line-height: 1;
+    font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  }
+
+  .timer-display.warning {
+    color: #f59e0b;
+    animation: countdown-pulse 1s ease-in-out infinite;
+  }
+
+  .timer-display.danger {
+    color: #ef4444;
+    animation: countdown-pulse 0.5s ease-in-out infinite;
+  }
+
+  .timer-controls {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .timer-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+
+  .timer-btn:hover { background: rgba(255,255,255,0.2); }
+
+  /* ============================================
+     LOWER THIRD
+     ============================================ */
+  .lower-third-container {
+    position: absolute;
+    bottom: 80px;
+    left: 30px;
+    right: 30px;
+    display: flex;
+    align-items: flex-end;
+    z-index: 100;
+  }
+
+  .lower-third-main {
+    flex: 1;
+    background: linear-gradient(90deg, var(--bg-overlay) 0%, var(--bg-overlay-light) 100%);
+    backdrop-filter: blur(6px);
+    padding: 16px 24px 16px 28px;
+    position: relative;
+    overflow: hidden;
+    border-radius: 0 0 0 8px;
+  }
+
+  .lower-third-main::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 6px;
+    height: 100%;
+    background: linear-gradient(180deg, var(--accent-color) 0%, var(--accent-dark) 100%);
+  }
+
+  .lower-third-main::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent-color) 0%, var(--accent-dark) 60%, transparent 100%);
+  }
+
+  .lt-label {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--accent-color);
+    margin-bottom: 4px;
+  }
+
+  .lt-title {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.2;
+    letter-spacing: 0.5px;
+  }
+
+  .lt-subtitle {
+    font-size: 18px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+    font-weight: 400;
+  }
+
+  .logo-box {
+    background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-dark) 100%);
+    padding: 20px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 120px;
+    border-radius: 0 8px 8px 0;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  }
+
+  .logo-text {
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: 3px;
+    color: #ffffff;
+    text-transform: uppercase;
+  }
+
+  /* ============================================
+     NEWS TICKER
+     ============================================ */
+  .ticker-container {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--ticker-bg);
+    border-top: 2px solid var(--ticker-border);
+    height: 50px;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    z-index: 100;
+  }
+
+  .ticker-label {
+    background: var(--accent-color);
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    padding: 0 20px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    text-transform: uppercase;
+    z-index: 2;
+    flex-shrink: 0;
+  }
+
+  .ticker-track {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    height: 100%;
+  }
+
+  .ticker-content {
+    display: flex;
+    white-space: nowrap;
+    animation: ticker-scroll 30s linear infinite;
+    height: 100%;
+    align-items: center;
+  }
+
+  .ticker-item {
+    font-size: 14px;
+    color: var(--text-secondary);
+    padding: 0 30px;
+    border-right: 1px solid #333;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  .ticker-item strong {
+    color: var(--accent-color);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* ============================================
+     PANEL LATERAL
+     ============================================ */
+  .side-panel {
+    position: absolute;
+    top: 100px;
+    right: 30px;
+    width: 320px;
+    background: linear-gradient(180deg, var(--bg-overlay) 0%, var(--bg-overlay-light) 100%);
+    backdrop-filter: blur(6px);
+    border-radius: 8px;
+    overflow: hidden;
+    z-index: 100;
+    display: none;
+  }
+
+  .side-panel.active { display: block; }
+
+  .side-panel-header {
+    background: linear-gradient(90deg, var(--accent-color) 0%, var(--accent-dark) 100%);
+    padding: 10px 16px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #ffffff;
+  }
+
+  .side-panel-body {
+    padding: 16px;
+  }
+
+  .side-panel-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+  }
+
+  .side-panel-role {
+    font-size: 13px;
+    color: var(--accent-color);
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  .side-panel-info {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+
+  /* ============================================
+     API NEWS FEED (Breaking News Banner)
+     ============================================ */
+  .breaking-banner {
+    position: absolute;
+    top: 80px;
+    left: 30px;
+    right: 30px;
+    background: linear-gradient(90deg, var(--accent-color) 0%, var(--accent-dark) 100%);
+    padding: 10px 20px;
+    border-radius: 6px;
+    z-index: 100;
+    display: none;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  }
+
+  .breaking-banner.active { display: flex; }
+
+  .breaking-icon {
+    font-size: 18px;
+    animation: blink-live 1s ease-in-out infinite;
+  }
+
+  .breaking-label {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #fff;
+    white-space: nowrap;
+  }
+
+  .breaking-text {
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .breaking-source {
+    font-size: 10px;
+    color: rgba(255,255,255,0.7);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* ============================================
+     RESPONSIVE
+     ============================================ */
+  @media (max-width: 1200px) {
+    body { width: 100%; height: auto; min-height: 600px; }
+    .lt-title { font-size: 24px; }
+    .lt-subtitle { font-size: 14px; }
+    .logo-box { padding: 14px 20px; min-width: 90px; }
+    .logo-text { font-size: 16px; }
+    .timer-display { font-size: 32px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- EN VIVO -->
+<div class="live-badge anim-fade-in" id="live-badge">
+  <div class="live-dot-container">
+    <div class="live-dot-ring"></div>
+    <div class="live-dot"></div>
+  </div>
+  <div class="live-text">EN VIVO</div>
+</div>
+
+<!-- RELOJ -->
+<div class="clock-display anim-fade-in" id="clock">00:00</div>
+
+<!-- CRONÓMETRO -->
+<div class="timer-container" id="timer-container">
+  <div class="timer-box anim-scale-in">
+    <div class="timer-label" id="timer-label">CUENTA REGRESIVA</div>
+    <div class="timer-display" id="timer-display">00:00:00</div>
+  </div>
+</div>
+
+<!-- BREAKING NEWS BANNER (API) -->
+<div class="breaking-banner" id="breaking-banner">
+  <div class="breaking-icon">🔴</div>
+  <div class="breaking-label">ÚLTIMA HORA</div>
+  <div class="breaking-text" id="breaking-text">Noticia de última hora cargada desde fuente externa</div>
+  <div class="breaking-source" id="breaking-source">API</div>
+</div>
+
+<!-- LOWER THIRD -->
+<div class="lower-third-container anim-slide-up" id="lower-third">
+  <div class="lower-third-main">
+    <div class="lt-label" id="lt-label">ÚLTIMA HORA</div>
+    <div class="lt-title" id="lt-title">Titular principal del noticiero</div>
+    <div class="lt-subtitle" id="lt-subtitle">Información complementaria del reporte en curso</div>
+  </div>
+  <div class="logo-box">
+    <div class="logo-text" id="logo-text">TV</div>
+  </div>
+</div>
+
+<!-- NEWS TICKER -->
+<div class="ticker-container" id="ticker-container">
+  <div class="ticker-label">ÚLTIMAS</div>
+  <div class="ticker-track">
+    <div class="ticker-content" id="ticker-content">
+      <span class="ticker-item"><strong>INTERNACIONAL</strong> Cumbre de líderes europeos inicia mañana en Bruselas</span>
+      <span class="ticker-item"><strong>ECONOMÍA</strong> Bolsa cierra con alza del 1.2% en jornada positiva</span>
+      <span class="ticker-item"><strong>DEPORTES</strong> Final de Copa se juega este fin de semana</span>
+      <span class="ticker-item"><strong>CLIMA</strong> Alerta por lluvias intensas en la región costera</span>
+      <span class="ticker-item"><strong>TECNOLOGÍA</strong> Nueva generación de chips anunciada</span>
+      <span class="ticker-item"><strong>SALUD</strong> Campaña de vacunación alcanza el 85% de cobertura</span>
+      <span class="ticker-item"><strong>INTERNACIONAL</strong> Cumbre de líderes europeos inicia mañana en Bruselas</span>
+      <span class="ticker-item"><strong>ECONOMÍA</strong> Bolsa cierra con alza del 1.2% en jornada positiva</span>
+      <span class="ticker-item"><strong>DEPORTES</strong> Final de Copa se juega este fin de semana</span>
+      <span class="ticker-item"><strong>CLIMA</strong> Alerta por lluvias intensas en la región costera</span>
+      <span class="ticker-item"><strong>TECNOLOGÍA</strong> Nueva generación de chips anunciada</span>
+      <span class="ticker-item"><strong>SALUD</strong> Campaña de vacunación alcanza el 85% de cobertura</span>
+    </div>
+  </div>
+</div>
+
+<!-- PANEL LATERAL -->
+<div class="side-panel" id="side-panel">
+  <div class="side-panel-header">Invitado</div>
+  <div class="side-panel-body">
+    <div class="side-panel-name" id="side-name">Nombre del Invitado</div>
+    <div class="side-panel-role" id="side-role">Analista Político</div>
+    <div class="side-panel-info" id="side-info">Especialista en relaciones internacionales con 15 años de experiencia.</div>
+  </div>
+</div>
+
+<script>
+  // ============================================
+  // RELOJ
+  // ============================================
+  function updateClock() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2, '0');
+    const m = String(now.getMinutes()).padStart(2, '0');
+    document.getElementById('clock').textContent = h + ':' + m;
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  // ============================================
+  // CRONÓMETRO / TIMER
+  // ============================================
+  let timerInterval = null;
+  let timerSeconds = 0;
+  let timerRunning = false;
+  let timerDirection = 'down'; // 'down' o 'up'
+  let timerWarning = 30; // segundos para warning
+  let timerDanger = 10;  // segundos para danger
+
+  function formatTime(totalSeconds) {
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    const s = totalSeconds % 60;
+    if (h > 0) {
+      return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    }
+    return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  }
+
+  function startTimer(seconds, label, direction, warning, danger) {
+    timerSeconds = seconds;
+    timerDirection = direction || 'down';
+    timerWarning = warning || 30;
+    timerDanger = danger || 10;
+    timerRunning = true;
+
+    document.getElementById('timer-label').textContent = label || 'CUENTA REGRESIVA';
+    document.getElementById('timer-container').classList.add('active');
+    updateTimerDisplay();
+
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+      if (timerDirection === 'down') {
+        timerSeconds--;
+        if (timerSeconds <= 0) {
+          timerSeconds = 0;
+          timerRunning = false;
+          clearInterval(timerInterval);
+        }
+      } else {
+        timerSeconds++;
+      }
+      updateTimerDisplay();
+    }, 1000);
+  }
+
+  function updateTimerDisplay() {
+    const display = document.getElementById('timer-display');
+    display.textContent = formatTime(timerSeconds);
+
+    display.classList.remove('warning', 'danger');
+    if (timerDirection === 'down' && timerSeconds <= timerDanger && timerSeconds > 0) {
+      display.classList.add('danger');
+    } else if (timerDirection === 'down' && timerSeconds <= timerWarning && timerSeconds > 0) {
+      display.classList.add('warning');
+    }
+  }
+
+  function stopTimer() {
+    timerRunning = false;
+    if (timerInterval) clearInterval(timerInterval);
+    document.getElementById('timer-container').classList.remove('active');
+  }
+
+  function pauseTimer() {
+    timerRunning = !timerRunning;
+  }
+
+  function resetTimer() {
+    timerSeconds = 0;
+    updateTimerDisplay();
+  }
+
+  // ============================================
+  // TRANSICIONES
+  // ============================================
+  function showElement(id, animation) {
+    const el = document.getElementById(id);
+    el.classList.remove('element-hidden');
+    el.classList.remove('anim-fade-out');
+
+    // Remove old animation classes
+    el.classList.forEach(cls => {
+      if (cls.startsWith('anim-') && cls !== 'anim-fade-out') el.classList.remove(cls);
+    });
+
+    void el.offsetWidth; // force reflow
+    el.classList.add(animation || 'anim-fade-in');
+  }
+
+  function hideElement(id, animation) {
+    const el = document.getElementById(id);
+    el.classList.add(animation || 'anim-fade-out');
+    setTimeout(() => {
+      el.classList.add('element-hidden');
+      el.classList.remove(animation || 'anim-fade-out');
+    }, 300);
+  }
+
+  function animateElement(id, animation) {
+    const el = document.getElementById(id);
+    el.classList.forEach(cls => {
+      if (cls.startsWith('anim-')) el.classList.remove(cls);
+    });
+    void el.offsetWidth;
+    el.classList.add(animation);
+  }
+
+  // ============================================
+  // API DE NOTICIAS (Simulado + Real)
+  // ============================================
+  let newsAPIInterval = null;
+  let newsAPIEnabled = false;
+  let newsAPISource = 'demo';
+
+  // Noticias demo para cuando no hay API real
+  const demoNews = [
+    { title: 'Cumbre de líderes europeos inicia mañana en Bruselas', source: 'EU News', category: 'INTERNACIONAL' },
+    { title: 'Bolsa cierra con alza del 1.2% en jornada positiva', source: 'Finance Daily', category: 'ECONOMÍA' },
+    { title: 'Final de Copa se juega este fin de semana', source: 'Sports Network', category: 'DEPORTES' },
+    { title: 'Alerta por lluvias intensas en la región costera', source: 'Weather Service', category: 'CLIMA' },
+    { title: 'Nueva generación de chips anunciada por fabricante', source: 'Tech Today', category: 'TECNOLOGÍA' },
+    { title: 'Campaña de vacunación alcanza el 85% de cobertura', source: 'Health Ministry', category: 'SALUD' },
+    { title: 'Presidente anuncia nuevas medidas económicas', source: 'Gov Press', category: 'POLÍTICA' },
+    { title: 'Descubrimiento arqueológico en zona maya', source: 'Culture Mag', category: 'CULTURA' },
+    { title: 'Inflación se mantiene estable este mes', source: 'Central Bank', category: 'ECONOMÍA' },
+    { title: 'Nueva ruta aérea conecta capitales latinoamericanas', source: 'Travel News', category: 'INTERNACIONAL' }
+  ];
+
+  function startNewsAPI(source, interval) {
+    newsAPIEnabled = true;
+    newsAPISource = source || 'demo';
+    const refreshInterval = (interval || 30) * 1000;
+
+    if (newsAPIInterval) clearInterval(newsAPIInterval);
+
+    // Carga inicial
+    fetchNews();
+
+    newsAPIInterval = setInterval(fetchNews, refreshInterval);
+  }
+
+  function stopNewsAPI() {
+    newsAPIEnabled = false;
+    if (newsAPIInterval) clearInterval(newsAPIInterval);
+    document.getElementById('breaking-banner').classList.remove('active');
+  }
+
+  async function fetchNews() {
+    if (!newsAPIEnabled) return;
+
+    try {
+      let news = null;
+
+      if (newsAPISource === 'demo') {
+        // Modo demo: noticias aleatorias
+        news = demoNews[Math.floor(Math.random() * demoNews.length)];
+      } else if (newsAPISource === 'newsapi') {
+        // NewsAPI.org (requiere API key)
+        // const response = await fetch('https://newsapi.org/v2/top-headlines?country=us&apiKey=YOUR_KEY');
+        // const data = await response.json();
+        // news = data.articles[0];
+        news = demoNews[Math.floor(Math.random() * demoNews.length)]; // fallback
+      } else if (newsAPISource === 'gnews') {
+        // GNews (requiere API key)
+        news = demoNews[Math.floor(Math.random() * demoNews.length)]; // fallback
+      }
+
+      if (news) {
+        showBreakingNews(news.title, news.source, news.category);
+      }
+    } catch (e) {
+      console.log('News fetch error:', e);
+    }
+  }
+
+  function showBreakingNews(text, source, category) {
+    const banner = document.getElementById('breaking-banner');
+    document.getElementById('breaking-text').textContent = text;
+    document.getElementById('breaking-source').textContent = (source || 'API').toUpperCase();
+    banner.classList.add('active');
+
+    // Auto-hide después de 15 segundos
+    setTimeout(() => {
+      banner.classList.remove('active');
+    }, 15000);
+  }
+
+  // ============================================
+  // FUNCIONES DE CONTROL PRINCIPALES
+  // ============================================
+  function setTitle(title, subtitle, label) {
+    if (title) document.getElementById('lt-title').textContent = title;
+    if (subtitle) document.getElementById('lt-subtitle').textContent = subtitle;
+    if (label) document.getElementById('lt-label').textContent = label;
+  }
+
+  function setLogo(text) {
+    document.getElementById('logo-text').textContent = text;
+  }
+
+  function setAccentColor(color) {
+    document.documentElement.style.setProperty('--accent-color', color);
+    const dark = adjustColor(color, -40);
+    document.documentElement.style.setProperty('--accent-dark', dark);
+  }
+
+  function adjustColor(hex, amount) {
+    const num = parseInt(hex.replace('#', ''), 16);
+    const r = Math.max(0, Math.min(255, (num >> 16) + amount));
+    const g = Math.max(0, Math.min(255, ((num >> 8) & 0x00FF) + amount));
+    const b = Math.max(0, Math.min(255, (num & 0x00FF) + amount));
+    return '#' + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
+  }
+
+  function setTicker(items) {
+    const container = document.getElementById('ticker-content');
+    let html = '';
+    items.forEach(item => {
+      html += `<span class="ticker-item"><strong>${item.category}</strong> ${item.text}</span>`;
+    });
+    items.forEach(item => {
+      html += `<span class="ticker-item"><strong>${item.category}</strong> ${item.text}</span>`;
+    });
+    container.innerHTML = html;
+  }
+
+  function toggleSidePanel(show) {
+    const panel = document.getElementById('side-panel');
+    if (show) {
+      panel.classList.add('active');
+      animateElement('side-panel', 'anim-slide-left');
+    } else {
+      panel.classList.remove('active');
+    }
+  }
+
+  function setSidePanel(name, role, info) {
+    if (name) document.getElementById('side-name').textContent = name;
+    if (role) document.getElementById('side-role').textContent = role;
+    if (info) document.getElementById('side-info').textContent = info;
+  }
+
+  function setVisibility(config) {
+    if (config.live !== undefined) {
+      const el = document.getElementById('live-badge');
+      el.style.display = config.live ? 'flex' : 'none';
+    }
+    if (config.clock !== undefined) {
+      document.getElementById('clock').style.display = config.clock ? 'block' : 'none';
+    }
+    if (config.lowerThird !== undefined) {
+      document.getElementById('lower-third').style.display = config.lowerThird ? 'flex' : 'none';
+    }
+    if (config.ticker !== undefined) {
+      document.getElementById('ticker-container').style.display = config.ticker ? 'flex' : 'none';
+    }
+    if (config.timer !== undefined) {
+      document.getElementById('timer-container').style.display = config.timer ? 'block' : 'none';
+    }
+    if (config.breaking !== undefined) {
+      document.getElementById('breaking-banner').style.display = config.breaking ? 'flex' : 'none';
+    }
+    if (config.sidePanel !== undefined) {
+      toggleSidePanel(config.sidePanel);
+    }
+  }
+
+  // ============================================
+  // COMUNICACIÓN CON PANEL DE CONTROL
+  // ============================================
+  window.addEventListener('message', function(e) {
+    handleCommand(e.data);
+  });
+
+  // Escucha localStorage para comunicación same-origin
+  window.addEventListener('storage', function(e) {
+    if (e.key === 'overlay_command') {
+      try {
+        const data = JSON.parse(e.newValue);
+        handleCommand(data);
+      } catch (err) {}
+    }
+  });
+
+  function handleCommand(data) {
+    if (!data || !data.command) return;
+
+    switch(data.command) {
+      case 'setLowerThird':
+        setTitle(data.data.title, data.data.subtitle, data.data.label);
+        break;
+      case 'clearLowerThird':
+        setTitle('', '', '');
+        break;
+      case 'setLogoColor':
+        setLogo(data.data.logo);
+        setAccentColor(data.data.color);
+        break;
+      case 'setTicker':
+        setTicker(data.data.items);
+        break;
+      case 'setSidePanel':
+        setSidePanel(data.data.name, data.data.role, data.data.info);
+        toggleSidePanel(data.data.visible);
+        break;
+      case 'setVisibility':
+        setVisibility(data.data);
+        break;
+      case 'loadPreset':
+        applyPreset(data.data);
+        break;
+      case 'startTimer':
+        startTimer(data.data.seconds, data.data.label, data.data.direction, data.data.warning, data.data.danger);
+        break;
+      case 'stopTimer':
+        stopTimer();
+        break;
+      case 'pauseTimer':
+        pauseTimer();
+        break;
+      case 'showElement':
+        showElement(data.data.id, data.data.animation);
+        break;
+      case 'hideElement':
+        hideElement(data.data.id, data.data.animation);
+        break;
+      case 'animateElement':
+        animateElement(data.data.id, data.data.animation);
+        break;
+      case 'startNewsAPI':
+        startNewsAPI(data.data.source, data.data.interval);
+        break;
+      case 'stopNewsAPI':
+        stopNewsAPI();
+        break;
+      case 'showBreakingNews':
+        showBreakingNews(data.data.text, data.data.source, data.data.category);
+        break;
+    }
+  }
+
+  function applyPreset(p) {
+    if (p.label !== undefined) document.getElementById('lt-label').textContent = p.label;
+    if (p.title !== undefined) document.getElementById('lt-title').textContent = p.title;
+    if (p.subtitle !== undefined) document.getElementById('lt-subtitle').textContent = p.subtitle;
+    if (p.logo !== undefined) document.getElementById('logo-text').textContent = p.logo;
+    if (p.color !== undefined) setAccentColor(p.color);
+    if (p.ticker) setTicker(p.ticker);
+  }
+
+  // ============================================
+  // INICIALIZACIÓN
+  // ============================================
+  console.log('Overlay Noticiero TV v2 cargado. Listo para recibir comandos.');
+  console.log('Comandos disponibles: setTitle(), setLogo(), setAccentColor(), startTimer(), showElement(), etc.');
+</script>
+
+</body>
+</html>
