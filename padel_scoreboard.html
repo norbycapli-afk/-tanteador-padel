@@ -2,392 +2,204 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tanteador Pádel</title>
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&display=swap');
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Arial', sans-serif; background: #1a1a2e; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; padding: 20px; }
+  body { font-family: 'Barlow Condensed', Arial, sans-serif; background: transparent; padding: 24px; }
 
   .overlay {
-    background: rgba(0,0,0,0.82);
-    border: 2px solid rgba(255,255,255,0.15);
-    border-radius: 12px;
-    padding: 14px 20px;
-    width: 720px;
-    backdrop-filter: blur(8px);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    width: 780px;
+    background: linear-gradient(135deg, rgba(10,10,20,0.95) 0%, rgba(20,20,40,0.92) 100%);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 14px; overflow: hidden;
+    box-shadow: 0 12px 48px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.08);
   }
-  .tournament-bar {
+
+  .top-bar {
     display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 10px; padding-bottom: 8px;
-    border-bottom: 1px solid rgba(255,255,255,0.12);
+    padding: 10px 18px;
+    background: linear-gradient(90deg, rgba(220,30,40,0.9), rgba(180,20,30,0.85));
+    border-bottom: 1px solid rgba(255,255,255,0.08);
   }
-  .tournament-name { color: #f0c040; font-size: 13px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; }
-  .match-time { color: #fff; font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; background: rgba(255,255,255,0.08); padding: 3px 10px; border-radius: 6px; }
-  .time-live { display: inline-block; width: 8px; height: 8px; background: #ff3b3b; border-radius: 50%; margin-right: 6px; animation: blink 1.2s infinite; }
-  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+  .logo-area { display: flex; align-items: center; min-width: 60px; }
+  .logo-img { height: 32px; max-width: 120px; object-fit: contain; display: none; }
+  .logo-ph { width: 32px; height: 32px; background: rgba(255,255,255,0.15); border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+  .tournament-name { color: #fff; font-size: 16px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; text-align: center; flex: 1; }
+  .time-area { display: flex; align-items: center; gap: 8px; min-width: 80px; justify-content: flex-end; }
+  .live-pill { display: none; align-items: center; gap: 5px; background: rgba(0,0,0,0.35); border-radius: 20px; padding: 3px 9px; font-size: 11px; font-weight: 700; color: #fff; letter-spacing: 1px; }
+  .live-pill.on { display: flex; }
+  .live-dot { width: 7px; height: 7px; background: #fff; border-radius: 50%; animation: blink 1s infinite; }
+  @keyframes blink { 0%,100%{opacity:1}50%{opacity:0.2} }
+  .match-time { color: #fff; font-size: 18px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: 1px; }
 
-  .sets-header {
-    display: grid;
-    grid-template-columns: 1fr 36px 36px 36px 64px 72px;
-    gap: 4px; padding: 0 10px 4px; align-items: center;
-  }
-  .sets-header span {
-    color: rgba(255,255,255,0.3); font-size: 10px; font-weight: 700;
-    letter-spacing: 1.5px; text-transform: uppercase; text-align: center;
-  }
+  .tb-badge { display: none; text-align: center; background: linear-gradient(90deg,rgba(168,85,247,0.3),rgba(139,92,246,0.2)); color: #d8b4fe; font-size: 11px; font-weight: 800; letter-spacing: 3px; padding: 5px 0; border-bottom: 1px solid rgba(168,85,247,0.3); }
 
-  .scoreboard { display: flex; flex-direction: column; gap: 4px; }
-  .team-row {
-    display: grid;
-    grid-template-columns: 1fr 36px 36px 36px 64px 72px;
-    align-items: center; gap: 4px;
-    padding: 8px 10px; border-radius: 8px; transition: background 0.2s;
-  }
-  .team-row.serving { background: rgba(255,255,255,0.06); }
+  .scoreboard { padding: 10px 16px 14px; }
+  .col-headers { display: grid; grid-template-columns: 1fr 44px 44px 44px 72px 86px; gap: 4px; padding: 0 8px 6px; }
+  .col-headers span { text-align: center; color: rgba(255,255,255,0.28); font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
 
-  .team-name { color: #fff; font-size: 17px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .serving-dot { width: 8px; height: 8px; background: #f0c040; border-radius: 50%; display: inline-block; margin-right: 8px; visibility: hidden; }
-  .team-row.serving .serving-dot { visibility: visible; }
+  .team-rows { display: flex; flex-direction: column; gap: 5px; }
+  .team-row { display: grid; grid-template-columns: 1fr 44px 44px 44px 72px 86px; align-items: center; gap: 4px; padding: 10px 8px; border-radius: 9px; border: 1px solid transparent; transition: all 0.25s; }
+  .team-row.serving { background: rgba(255,255,255,0.055); border-color: rgba(255,255,255,0.07); }
 
-  .set-cell { text-align: center; color: rgba(255,255,255,0.4); font-size: 16px; font-weight: 600; }
-  .set-cell.won { color: #fff; }
-  .set-cell.cur { color: rgba(255,255,255,0.6); font-size: 18px; }
+  .name-wrap { display: flex; align-items: center; gap: 8px; overflow: hidden; }
+  .serving-indicator { width: 4px; height: 32px; border-radius: 2px; background: #dc1e28; flex-shrink: 0; opacity: 0; transition: opacity 0.2s; }
+  .team-row.serving .serving-indicator { opacity: 1; }
+  .team-name { color: #fff; font-size: 22px; font-weight: 800; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: uppercase; }
 
-  .game-cell { text-align: center; color: #fff; font-size: 30px; font-weight: 800; font-variant-numeric: tabular-nums; background: rgba(255,255,255,0.1); border-radius: 6px; padding: 4px 0; }
-  .point-cell { text-align: center; color: #f0c040; font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; background: rgba(240,192,64,0.12); border: 1px solid rgba(240,192,64,0.25); border-radius: 6px; padding: 4px 0; min-width: 64px; }
-  .point-cell.deuce { color: #ff9f40; background: rgba(255,159,64,0.12); border-color: rgba(255,159,64,0.3); }
-  .point-cell.adv { color: #22c55e; background: rgba(34,197,94,0.12); border-color: rgba(34,197,94,0.3); }
-  .point-cell.tb { color: #c084fc; background: rgba(192,132,252,0.12); border-color: rgba(192,132,252,0.3); }
+  .set-cell { text-align: center; color: rgba(255,255,255,0.3); font-size: 18px; font-weight: 700; padding: 4px 0; border-radius: 5px; transition: all 0.3s; }
+  .set-cell.won { color: #fff; font-size: 20px; }
+  .set-cell.cur { color: rgba(255,255,255,0.65); font-size: 20px; }
 
-  /* MODO TIE-BREAK banner */
-  .tb-badge {
-    text-align: center; color: #c084fc; font-size: 11px; font-weight: 700;
-    letter-spacing: 2px; padding: 4px 0 2px; display: none;
-  }
+  .game-cell { text-align: center; color: #fff; font-size: 34px; font-weight: 900; background: rgba(255,255,255,0.07); border-radius: 7px; padding: 5px 0; font-variant-numeric: tabular-nums; letter-spacing: -1px; transition: all 0.2s; }
+  .game-cell.flash { animation: flashGame 0.4s ease; }
+  @keyframes flashGame { 0%{background:rgba(240,192,64,0.5);transform:scale(1.08)}100%{background:rgba(255,255,255,0.07);transform:scale(1)} }
 
-  /* CONTROL PANEL */
-  .control-panel { background: #16213e; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; width: 720px; }
-  .control-title { color: rgba(255,255,255,0.5); font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px; }
+  .point-cell { text-align: center; font-size: 28px; font-weight: 900; border-radius: 7px; padding: 5px 0; transition: all 0.2s; font-variant-numeric: tabular-nums; border: 1px solid transparent; }
+  .point-cell.normal { color: #f0c040; background: rgba(240,192,64,0.1); border-color: rgba(240,192,64,0.2); }
+  .point-cell.oro { color: #fff; background: linear-gradient(135deg,rgba(240,192,64,0.4),rgba(220,160,30,0.3)); border-color: rgba(240,192,64,0.5); font-size: 20px; letter-spacing: 1px; animation: pulseOro 1.2s infinite; }
+  @keyframes pulseOro { 0%,100%{box-shadow:0 0 0 0 rgba(240,192,64,0.4)}50%{box-shadow:0 0 0 6px rgba(240,192,64,0)} }
+  .point-cell.tb { color: #d8b4fe; background: rgba(168,85,247,0.12); border-color: rgba(168,85,247,0.3); }
+  .point-cell.flash { animation: flashPt 0.35s ease; }
+  @keyframes flashPt { 0%{transform:scale(1.12)}100%{transform:scale(1)} }
 
-  .config-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
-  .config-full { grid-template-columns: 1fr; }
-  .config-input { display: flex; flex-direction: column; gap: 4px; }
-  .config-input label { color: rgba(255,255,255,0.45); font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
-  .config-input input { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; color: #fff; font-size: 13px; padding: 8px 12px; outline: none; transition: border 0.2s; }
-  .config-input input:focus { border-color: rgba(240,192,64,0.6); }
+  .team-divider { height: 1px; background: rgba(255,255,255,0.06); margin: 0 8px; }
 
-  .team-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
-  .team-ctrl { background: rgba(255,255,255,0.04); border-radius: 12px; padding: 14px; }
-  .team-ctrl-name { color: #fff; font-size: 13px; font-weight: 700; margin-bottom: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-  .btn-section { margin-bottom: 6px; }
-  .btn-label { color: rgba(255,255,255,0.3); font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px; }
-  .btn-row { display: flex; gap: 6px; flex-wrap: wrap; }
-
-  .btn { border: none; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; padding: 7px 12px; transition: transform 0.1s, opacity 0.15s; letter-spacing: 0.3px; }
-  .btn:active { transform: scale(0.95); }
-  .btn-green { background: #22c55e; color: #fff; }
-  .btn-red { background: #ef4444; color: #fff; }
-  .btn-yellow { background: #f0c040; color: #1a1a2e; }
-  .btn-blue { background: #3b82f6; color: #fff; }
-  .btn-purple { background: #a855f7; color: #fff; }
-  .btn-gray { background: rgba(255,255,255,0.12); color: #fff; }
-  .btn:hover { opacity: 0.88; }
-
-  .bottom-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-  .btn-lg { padding: 10px 20px; font-size: 13px; border-radius: 10px; }
-  .divider { width: 1px; height: 32px; background: rgba(255,255,255,0.1); }
-  .status-badge { font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 20px; letter-spacing: 0.5px; }
-  .status-running { background: rgba(255,59,59,0.2); color: #ff6b6b; }
-  .status-stopped { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.5); }
-  .mode-badge { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; background: rgba(168,85,247,0.2); color: #c084fc; display: none; }
+  /* QR overlay opcional */
+  .qr-box { position: fixed; bottom: 20px; right: 20px; background: #fff; padding: 8px; border-radius: 10px; display: none; }
+  .qr-box img { width: 80px; height: 80px; display: block; }
+  .qr-label { text-align: center; font-size: 9px; font-weight: 800; color: #333; letter-spacing: 1px; margin-top: 4px; }
 </style>
 </head>
 <body>
-
-<!-- OVERLAY -->
-<div class="overlay" id="overlay">
-  <div class="tournament-bar">
-    <span class="tournament-name" id="disp-tournament">TORNEO PADEL TV</span>
-    <span class="match-time"><span class="time-live" id="live-dot"></span><span id="disp-time">00:00</span></span>
+<div class="overlay">
+  <div class="top-bar">
+    <div class="logo-area">
+      <img class="logo-img" id="logo-img" src="" alt="logo">
+      <div class="logo-ph" id="logo-ph">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.4)" stroke-width="2"/></svg>
+      </div>
+    </div>
+    <div class="tournament-name" id="disp-tournament">TORNEO PADEL TV</div>
+    <div class="time-area">
+      <div class="live-pill" id="live-pill"><span class="live-dot"></span>LIVE</div>
+      <div class="match-time" id="disp-time">00:00</div>
+    </div>
   </div>
-  <div class="tb-badge" id="tb-badge">⬡ TIE-BREAK</div>
-  <div class="sets-header">
-    <span></span>
-    <span>S1</span><span>S2</span><span>S3</span>
-    <span>GAME</span>
-    <span>PUNTO</span>
-  </div>
+  <div class="tb-badge" id="tb-badge">⬡ &nbsp; TIE — BREAK &nbsp; ⬡</div>
   <div class="scoreboard">
-    <div class="team-row serving" id="row-0">
-      <div class="team-name"><span class="serving-dot"></span><span id="disp-name-0">PAREJA 1</span></div>
-      <div class="set-cell cur" id="s0-0">-</div>
-      <div class="set-cell" id="s1-0">-</div>
-      <div class="set-cell" id="s2-0">-</div>
-      <div class="game-cell" id="g-0">0</div>
-      <div class="point-cell" id="p-0">0</div>
+    <div class="col-headers">
+      <span></span><span>S1</span><span>S2</span><span>S3</span><span>GAME</span><span>PUNTO</span>
     </div>
-    <div class="team-row" id="row-1">
-      <div class="team-name"><span class="serving-dot"></span><span id="disp-name-1">PAREJA 2</span></div>
-      <div class="set-cell cur" id="s0-1">-</div>
-      <div class="set-cell" id="s1-1">-</div>
-      <div class="set-cell" id="s2-1">-</div>
-      <div class="game-cell" id="g-1">0</div>
-      <div class="point-cell" id="p-1">0</div>
+    <div class="team-rows">
+      <div class="team-row serving" id="row-0">
+        <div class="name-wrap"><div class="serving-indicator"></div><div class="team-name" id="disp-name-0">PAREJA 1</div></div>
+        <div class="set-cell cur" id="s0-0">-</div><div class="set-cell" id="s1-0">-</div><div class="set-cell" id="s2-0">-</div>
+        <div class="game-cell" id="g-0">0</div><div class="point-cell normal" id="p-0">0</div>
+      </div>
+      <div class="team-divider"></div>
+      <div class="team-row" id="row-1">
+        <div class="name-wrap"><div class="serving-indicator"></div><div class="team-name" id="disp-name-1">PAREJA 2</div></div>
+        <div class="set-cell cur" id="s0-1">-</div><div class="set-cell" id="s1-1">-</div><div class="set-cell" id="s2-1">-</div>
+        <div class="game-cell" id="g-1">0</div><div class="point-cell normal" id="p-1">0</div>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- PANEL DE CONTROL -->
-<div class="control-panel">
-  <div class="control-title">Panel de control</div>
-
-  <div class="config-row">
-    <div class="config-input">
-      <label>Nombre Pareja 1</label>
-      <input type="text" id="inp-name-0" placeholder="PAREJA 1" oninput="updateName(0)" value="PAREJA 1">
-    </div>
-    <div class="config-input">
-      <label>Nombre Pareja 2</label>
-      <input type="text" id="inp-name-1" placeholder="PAREJA 2" oninput="updateName(1)" value="PAREJA 2">
-    </div>
-  </div>
-  <div class="config-row config-full" style="margin-bottom:16px;">
-    <div class="config-input">
-      <label>Nombre del Torneo</label>
-      <input type="text" id="inp-tournament" placeholder="TORNEO PADEL TV" oninput="updateTournament()" value="TORNEO PADEL TV">
-    </div>
-  </div>
-
-  <div class="team-controls">
-    <div class="team-ctrl">
-      <div class="team-ctrl-name" id="ctrl-name-0">PAREJA 1</div>
-      <div class="btn-section">
-        <div class="btn-label">Punto</div>
-        <div class="btn-row">
-          <button class="btn btn-green" onclick="addPoint(0)">+ Punto</button>
-          <button class="btn btn-red" onclick="subPoint(0)">− Punto</button>
-          <button class="btn btn-yellow" onclick="setServing(0)">Saque</button>
-        </div>
-      </div>
-    </div>
-    <div class="team-ctrl">
-      <div class="team-ctrl-name" id="ctrl-name-1">PAREJA 2</div>
-      <div class="btn-section">
-        <div class="btn-label">Punto</div>
-        <div class="btn-row">
-          <button class="btn btn-green" onclick="addPoint(1)">+ Punto</button>
-          <button class="btn btn-red" onclick="subPoint(1)">− Punto</button>
-          <button class="btn btn-yellow" onclick="setServing(1)">Saque</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="bottom-controls">
-    <button class="btn btn-blue btn-lg" id="btn-timer" onclick="toggleTimer()">▶ Iniciar</button>
-    <button class="btn btn-gray btn-lg" onclick="resetTimer()">⏱ Reset tiempo</button>
-    <div class="divider"></div>
-    <button class="btn btn-purple btn-lg" id="btn-tb" onclick="toggleTiebreak()">Tie-break</button>
-    <button class="btn btn-gray btn-lg" onclick="resetAll()">Reset todo</button>
-    <span class="status-badge status-stopped" id="status-badge">DETENIDO</span>
-    <span class="mode-badge" id="mode-badge">TIE-BREAK</span>
-  </div>
+<!-- QR opcional -->
+<div class="qr-box" id="qr-box">
+  <img id="qr-img" src="" alt="QR">
+  <div class="qr-label">SEGUÍ EN VIVO</div>
 </div>
 
-<script>
-// Secuencia normal de puntos
-const PTS = ['0','15','30','40','AD','WIN'];
-// Estado
-let st = {
-  names: ['PAREJA 1','PAREJA 2'],
-  tournament: 'TORNEO PADEL TV',
-  pts: [0, 0],       // índice en PTS
-  games: [0, 0],
-  sets: [null, null, null], // cada set: [g0, g1]
-  curSet: 0,
-  serving: 0,
-  tiebreak: false,
-  tbPts: [0, 0],
-  timerRunning: false,
-  timerSecs: 0,
-  timerInt: null
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBLmCZqYxGnheevtj4aY5s3X73FumaW-zc",
+  authDomain: "tanteador-padel.firebaseapp.com",
+  databaseURL: "https://tanteador-padel-default-rtdb.firebaseio.com",
+  projectId: "tanteador-padel",
+  storageBucket: "tanteador-padel.firebasestorage.app",
+  messagingSenderId: "491608542765",
+  appId: "1:491608542765:web:fb42fb877a72ae712d32a4"
 };
 
-function updateName(t) {
-  const v = (document.getElementById('inp-name-'+t).value || 'PAREJA '+(t+1)).toUpperCase();
-  st.names[t] = v;
-  document.getElementById('disp-name-'+t).textContent = v;
-  document.getElementById('ctrl-name-'+t).textContent = v;
-}
-function updateTournament() {
-  const v = (document.getElementById('inp-tournament').value || 'TORNEO PADEL TV').toUpperCase();
-  st.tournament = v;
-  document.getElementById('disp-tournament').textContent = v;
-}
-function setServing(t) {
-  st.serving = t;
-  document.getElementById('row-0').className = 'team-row'+(t===0?' serving':'');
-  document.getElementById('row-1').className = 'team-row'+(t===1?' serving':'');
-}
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const PTS = ['0','15','30','40'];
+let timerInt = null;
+let prevPts = [0,0], prevGames = [0,0], prevTb = false;
 
-// --- PUNTOS ---
-function addPoint(t) {
-  if(st.tiebreak) { addTBPoint(t); return; }
-  const o = 1-t;
-  const pi = st.pts[t];
-  // Deuce logic
-  if(pi === 3 && st.pts[o] === 3) { // 40-40 → PUNTO DE ORO, gana el game directo
-    winGame(t); return;
-  }
-  if(pi === 3 && st.pts[o] < 3) { // WIN normal
-    winGame(t); return;
-  }
-  st.pts[t]++;
-  render();
-}
-function subPoint(t) {
-  if(st.tiebreak) {
-    if(st.tbPts[t] > 0) st.tbPts[t]--;
-    render(); return;
-  }
-  if(st.pts[t] > 0) st.pts[t]--;
-  // si uno tenía AD y bajamos, volvemos a deuce
-  render();
-}
-function winGame(t) {
-  st.pts = [0,0];
-  st.games[t]++;
-  checkSetWin(t);
-  render();
-}
-function checkSetWin(t) {
-  const [a,b] = st.games;
-  const winT = (a>=6 && a-b>=2) || (a===7 && b===6);
-  const winO = (b>=6 && b-a>=2) || (b===7 && a===6);
-  if(winT || winO) {
-    st.sets[st.curSet] = [...st.games];
-    st.games = [0,0];
-    st.tiebreak = false;
-    if(st.curSet < 2) st.curSet++;
-  }
-  // Auto-activar tie-break si 6-6
-  if(st.games[0]===6 && st.games[1]===6) {
-    st.tiebreak = true;
-    st.tbPts = [0,0];
-  }
-}
+function flash(id){ const el=document.getElementById(id); el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); setTimeout(()=>el.classList.remove('flash'),500); }
 
-// --- TIE-BREAK ---
-function addTBPoint(t) {
-  st.tbPts[t]++;
-  const [a,b] = st.tbPts;
-  const lead = Math.abs(a-b);
-  if((a>=7||b>=7) && lead>=2) {
-    // gana el tie-break → gana el game → set
-    st.games[t]++;
-    st.tiebreak = false;
-    st.tbPts = [0,0];
-    st.pts = [0,0];
-    st.sets[st.curSet] = [...st.games];
-    st.games = [0,0];
-    if(st.curSet < 2) st.curSet++;
+// Cancha desde URL param ?cancha=1
+const cancha = new URLSearchParams(location.search).get('cancha')||'1';
+const dbPath = 'cancha'+cancha+'/estado';
+
+onValue(ref(db, dbPath), snap => {
+  const st = snap.val(); if(!st) return;
+
+  document.getElementById('disp-tournament').textContent=(st.tournament||'TORNEO PADEL TV').toUpperCase();
+
+  // Logo
+  const li=document.getElementById('logo-img'), lp=document.getElementById('logo-ph');
+  if(st.logoUrl){ li.src=st.logoUrl; li.style.display='block'; lp.style.display='none'; }
+  else { li.style.display='none'; lp.style.display='flex'; }
+
+  // QR
+  const qrBox=document.getElementById('qr-box');
+  if(st.qrUrl){ document.getElementById('qr-img').src=st.qrUrl; qrBox.style.display='block'; }
+  else { qrBox.style.display='none'; }
+
+  // Timer
+  clearInterval(timerInt);
+  if(st.timerRunning){
+    const base=st.timerBase||0, started=st.timerStarted||Date.now();
+    const upd=()=>{ const e=base+Math.floor((Date.now()-started)/1000); document.getElementById('disp-time').textContent=Math.floor(e/60).toString().padStart(2,'0')+':'+(e%60).toString().padStart(2,'0'); };
+    upd(); timerInt=setInterval(upd,500);
+    document.getElementById('live-pill').className='live-pill on';
+  } else {
+    const s=st.timerBase||0; document.getElementById('disp-time').textContent=Math.floor(s/60).toString().padStart(2,'0')+':'+(s%60).toString().padStart(2,'0');
+    document.getElementById('live-pill').className='live-pill';
   }
-  render();
-}
-function toggleTiebreak() {
-  st.tiebreak = !st.tiebreak;
-  if(st.tiebreak) { st.tbPts = [0,0]; st.pts = [0,0]; }
-  else { st.pts = [0,0]; }
-  render();
-}
 
-// --- RESET ---
-function resetAll() {
-  st.pts = [0,0]; st.games = [0,0]; st.sets = [null,null,null];
-  st.curSet = 0; st.serving = 0; st.tiebreak = false; st.tbPts = [0,0];
-  resetTimer(); render();
-  setServing(0);
-}
+  document.getElementById('disp-name-0').textContent=(st.names&&st.names[0])||'PAREJA 1';
+  document.getElementById('disp-name-1').textContent=(st.names&&st.names[1])||'PAREJA 2';
+  const srv=st.serving||0;
+  document.getElementById('row-0').className='team-row'+(srv===0?' serving':'');
+  document.getElementById('row-1').className='team-row'+(srv===1?' serving':'');
+  document.getElementById('tb-badge').style.display=st.tiebreak?'block':'none';
 
-// --- RENDER ---
-function render() {
-  const isTB = st.tiebreak;
-  document.getElementById('tb-badge').style.display = isTB ? 'block' : 'none';
-  document.getElementById('mode-badge').style.display = isTB ? 'inline-block' : 'none';
-  document.getElementById('btn-tb').textContent = isTB ? 'Salir TB' : 'Tie-break';
-  document.getElementById('btn-tb').className = isTB ? 'btn btn-gray btn-lg' : 'btn btn-purple btn-lg';
+  const sets=st.sets||[null,null,null], curSet=st.curSet||0;
+  const games=st.games||[0,0], tbPts=st.tbPts||[0,0], pts=st.pts||[0,0];
 
   for(let t=0;t<2;t++){
-    // Sets
     for(let s=0;s<3;s++){
-      const el = document.getElementById('s'+s+'-'+t);
-      const hEl = document.getElementById('s'+s+'-'+(1-t));
-      if(st.sets[s]){
-        el.textContent = st.sets[s][t];
-        el.className = 'set-cell'+(st.sets[s][t]>st.sets[s][1-t]?' won':'');
-      } else if(s===st.curSet){
-        el.textContent = st.games[t];
-        el.className = 'set-cell cur';
-      } else {
-        el.textContent = '-';
-        el.className = 'set-cell';
-      }
+      const el=document.getElementById('s'+s+'-'+t);
+      if(sets[s]){ el.textContent=sets[s][t]; el.className='set-cell'+(sets[s][t]>sets[s][1-t]?' won':''); }
+      else if(s===curSet){ el.textContent=games[t]; el.className='set-cell cur'; }
+      else { el.textContent='-'; el.className='set-cell'; }
     }
-    // Games
-    document.getElementById('g-'+t).textContent = isTB ? st.tbPts[t] : st.games[t];
+    const dg=st.tiebreak?tbPts[t]:games[t];
+    if(dg!==prevGames[t]){ flash('g-'+t); } prevGames[t]=dg;
+    document.getElementById('g-'+t).textContent=dg;
 
-    // Puntos
-    const pEl = document.getElementById('p-'+t);
-    if(isTB){
-      pEl.textContent = st.tbPts[t];
-      pEl.className = 'point-cell tb';
+    const pEl=document.getElementById('p-'+t);
+    if(st.tiebreak){
+      if(tbPts[t]!==prevPts[t]) flash('p-'+t); prevPts[t]=tbPts[t];
+      pEl.textContent=tbPts[t]; pEl.className='point-cell tb';
     } else {
-      const pi = st.pts[t];
-      const oi = st.pts[1-t];
-      let label = PTS[pi] || '0';
-      let cls = 'point-cell';
-      if(pi===3 && oi===3) { label='ORO'; cls='point-cell adv'; }
-      pEl.textContent = label;
-      pEl.className = cls;
+      const pi=pts[t],oi=pts[1-t];
+      if(pi!==prevPts[t]) flash('p-'+t); prevPts[t]=pi;
+      if(pi===3&&oi===3){ pEl.textContent='ORO'; pEl.className='point-cell oro'; }
+      else { pEl.textContent=PTS[pi]||'0'; pEl.className='point-cell normal'; }
     }
   }
-}
-
-// --- TIMER ---
-function toggleTimer() {
-  if(st.timerRunning){
-    clearInterval(st.timerInt); st.timerRunning=false;
-    document.getElementById('btn-timer').textContent='▶ Continuar';
-    document.getElementById('status-badge').className='status-badge status-stopped';
-    document.getElementById('status-badge').textContent='DETENIDO';
-    document.getElementById('live-dot').style.display='none';
-  } else {
-    st.timerInt=setInterval(tick,1000); st.timerRunning=true;
-    document.getElementById('btn-timer').textContent='⏸ Pausar';
-    document.getElementById('status-badge').className='status-badge status-running';
-    document.getElementById('status-badge').textContent='EN JUEGO';
-    document.getElementById('live-dot').style.display='inline-block';
-  }
-}
-function tick(){
-  st.timerSecs++;
-  const m=Math.floor(st.timerSecs/60).toString().padStart(2,'0');
-  const s=(st.timerSecs%60).toString().padStart(2,'0');
-  document.getElementById('disp-time').textContent=m+':'+s;
-}
-function resetTimer(){
-  clearInterval(st.timerInt); st.timerRunning=false; st.timerSecs=0;
-  document.getElementById('disp-time').textContent='00:00';
-  document.getElementById('btn-timer').textContent='▶ Iniciar';
-  document.getElementById('status-badge').className='status-badge status-stopped';
-  document.getElementById('status-badge').textContent='DETENIDO';
-  document.getElementById('live-dot').style.display='none';
-}
-
-document.getElementById('live-dot').style.display='none';
-render();
+  prevTb=st.tiebreak;
+});
 </script>
 </body>
 </html>
